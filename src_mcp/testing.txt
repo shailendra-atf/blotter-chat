@@ -1,0 +1,3 @@
+test if query from non existing table is generated
+
+include if not chroma db index

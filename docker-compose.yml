@@ -1,0 +1,31 @@
+services:
+  api-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi-pnl-engine
+    restart: always
+    ports:
+      - "9999:9999"
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui-2
+    restart: always
+    ports:
+      - "8050:8080"
+    environment:
+      - PORT=8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - open-webui-data:/app/backend/data
+    depends_on:
+      - api-service
+
+volumes:
+  open-webui-data:

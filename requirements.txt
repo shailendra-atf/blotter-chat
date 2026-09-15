@@ -1,0 +1,24 @@
+fastapi
+uvicorn
+pymongo
+langchain
+langchain-aws
+langchain_core
+pydantic
+python-dotenv
+motor
+pandas
+httptools
+aiofiles
+tabulate
+matplotlib
+unstructured
+markdown
+mcp>=1.3.0,<2
+fastmcp>=0.1.0
+langgraph
+langgraph-sdk
+chromadb
+langchain-mcp-adapters
+sse-starlette
+# uv pip install --upgrade "langchain-mcp-adapters>=0.1.0" "mcp>=1.3.0" "fastmcp>=0.1.0" "langgraph>=0.2.20"

@@ -1,0 +1,1283 @@
+2026-09-09 17:38:10,853 [INFO] mongodb-query-api - Initializing Async Motor MongoDB Client...
+2026-09-09 17:38:10,920 [INFO] mongodb-query-api - Initialized Motor Client for database: 'ValuationSummary04June'
+2026-09-09 17:38:11,100 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-09 17:38:12,011 [INFO] mongodb-query-api - Successfully initialized ChatBedrockConverse client.
+2026-09-09 17:38:12,511 [INFO] mongodb-query-api - Pinged MongoDB cluster asynchronously. Connection verified.
+2026-09-09 18:01:50,377 [INFO] mongodb-query-api - Received completion request: 'which trade names were negative in months when entire firm PnL was positive'
+2026-09-09 18:01:50,813 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:01:55,512 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:02:03,632 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}}, 'lastBusinessDay': {'$max': '$ValuationDate'}}}, {'$lookup': {'from': 'PnLCOB', 'let': {'lastDay': '$lastBusinessDay'}, 'pipeline': [{'$match': {'$expr': {'$eq': ['$ValuationDate', '$$lastDay']}}}, {'$group': {'_id': {'ValuationDate': '$ValuationDate', 'TradeName': '$TradeName'}, 'tradePnL': {'$sum': '$MTDPnL'}, 'firmPnL': {'$sum': {'$cond': [{'$eq': ['$TraderName', 'Aggregate']}, '$MTDPnL', 0]}}}}, {'$match': {'$expr': {'$and': [{'$lt': ['$tradePnL', 0]}, {'$gt': ['$firmPnL', 0]}]}}}], 'as': 'results'}}, {'$unwind': '$results'}, {'$project': {'_id': 0, 'ValuationDate': '$results._id.ValuationDate', 'TradeName': '$results._id.TradeName', 'TradePnL': '$results.tradePnL', 'FirmPnL': '$results.firmPnL'}}, {'$sort': {'ValuationDate': -1, 'TradeName': 1}}, {'$limit': 2000}]
+2026-09-09 18:02:03,644 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:02:09,604 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:02:16,224 [INFO] mongodb-query-api - | ValuationDate       | TradeName           |   TradePnL |   FirmPnL |
+|:--------------------|:--------------------|-----------:|----------:|
+| 2026-07-07 00:00:00 | EUR FXO 4mV Long AH |      -2186 |         9 |
+| 2026-07-07 00:00:00 | Long SFIZ6 RMDSSPRW |        -54 |        48 |
+| 2026-07-07 00:00:00 | SGD Basket YZ       |       -267 |        13 |
+
+**Trend:**
+
+```mermaid
+%%{init: 
+{
+    "theme": "base",
+        "themeVariables": {
+                "backgroundColor": "#FFFFFF",
+                "xyChart": {
+                    'width': 900,
+                    'height': 500,
+                    'xAxis': {
+                        'labelRotation': 45,
+                        'labelFontSize': 11
+                    }
+                }
+                "backgroundColor": "#F8FAFC",
+                "titleColor": "#0F172A",
+                "xAxisLabelColor": "#475569",
+                "xAxisTitleColor": "#0F172A",
+                "xAxisLineColor": "#CBD5E1",
+                "yAxisLabelColor": "#475569",
+                "yAxisTitleColor": "#0F172A",
+                "yAxisLineColor": "#CBD5E1",
+                "plotColorPalette": "#2563EB, #7C3AED, #059669"
+                }
+        }
+    }
+}%%
+xychart-beta horizontal
+    title "PnL Trend"
+    x-axis ["2026-07-07 00:00:00", "2026-07-07 00:00:00", "2026-07-07 00:00:00"]
+    y-axis "FirmPnL"
+    line [9.0, 48.0, 13.0]
+```
+
+
+2026-09-09 18:02:16,237 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:02:24,612 [INFO] mongodb-query-api - Request processed in 34.23 seconds.
+2026-09-09 18:02:24,763 [INFO] mongodb-query-api - Received completion request: '### Task:
+Suggest 3-5 relevant follow-up questions or prompts that the user might naturally ask next in this conversation as a **user**, based on the chat history, to help continue or deepen the discussion.
+### Guidelines:
+- Write all follow-up questions from the user’s point of view, directed to the assistant.
+- Make questions concise, clear, and directly related to the discussed topic(s).
+- Only suggest follow-ups that make sense given the chat content and do not repeat what was already covered.
+- If the conversation is very short or not specific, suggest more general (but relevant) follow-ups the user might ask.
+- Use the conversation's primary language; default to English if multilingual.
+- Response must be a JSON object with a "follow_ups" key containing an array of strings, no extra text or formatting.
+### Output:
+JSON format: { "follow_ups": ["Question 1?", "Question 2?", "Question 3?"] }
+### Chat History:
+<chat_history>
+USER: which trade names were negative in months when entire firm PnL was positive
+ASSISTANT: | ValuationDate       | TradeName           |   TradePnL |   FirmPnL |
+|:--------------------|:--------------------|-----------:|----------:|
+| 2026-07-07 00:00:00 | EUR FXO 4mV Long AH |      -2186 |         9 |
+| 2026-07-07 00:00:00 | Long SFIZ6 RMDSSPRW |        -54 |        48 |
+| 2026-07-07 00:00:00 | SGD Basket YZ       |       -267 |        13 |
+
+**Trend:**
+
+```mermaid
+%%{init: 
+{
+    "theme": "base",
+        "themeVariables": {
+                "backgroundColor": "#FFFFFF",
+                "xyChart": {
+                    'width': 900,
+                    'height': 500,
+                    'xAxis': {
+                        'labelRotation': 45,
+                        'labelFontSize': 11
+                    }
+                }
+                "backgroundColor": "#F8FAFC",
+                "titleColor": "#0F172A",
+                "xAxisLabelColor": "#475569",
+                "xAxisTitleColor": "#0F172A",
+                "xAxisLineColor": "#CBD5E1",
+                "yAxisLabelColor": "#475569",
+                "yAxisTitleColor": "#0F172A",
+                "yAxisLineColor": "#CBD5E1",
+                "plotColorPalette": "#2563EB, #7C3AED, #059669"
+                }
+        }
+    }
+}%%
+xychart-beta horizontal
+    title "PnL Trend"
+    x-axis ["2026-07-07 00:00:00", "2026-07-07 00:00:00", "2026-07-07 00:00:00"]
+    y-axis "FirmPnL"
+    line [9.0, 48.0, 13.0]
+```
+
+
+
+**Analysis**
+
+Based on the provided context and the query results, I can answer your question about which trade names were negative in months when the entire firm's PnL was positive. Here's the summary:
+
+1. EUR FXO 4mV Long AH
+   - Valuation Date: 2026-07-07
+   - Trade PnL: -2,186
+   - Firm PnL: 9
+
+2. Long SFIZ6 RMDSSPRW
+   - Valuation Date: 2026-07-07
+   - Trade PnL: -54
+   - Firm PnL: 48
+
+3. SGD Basket YZ
+   - Valuation Date: 2026-07-07
+   - Trade PnL: -267
+   - Firm PnL: 13
+
+All these trade names had negative PnL on July 7, 2026, which was the last business day of that month. On this date, the entire firm's PnL was positive, while these specific trades showed losses.
+
+It's important to note that all these results are from the same date, which suggests that this was a month where the firm as a whole was profitable, but these particular trades underperformed.
+
+The firm's overall positive PnL on this date ranged from 9 to 48, while the individual trade losses ranged from -54 to -2,186. The most significant loss was from the "EUR FXO 4mV Long AH" trade, which had a negative PnL of -2,186 when the firm's overall PnL was 9.
+
+This information could be useful for analyzing which trades are underperforming when the firm is generally doing well, potentially highlighting areas for improvement or risk management.
+</chat_history>'
+2026-09-09 18:02:24,773 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:02:28,232 [INFO] mongodb-query-api - Request processed in 3.47 seconds.
+2026-09-09 18:02:28,341 [INFO] mongodb-query-api - Received completion request: '### Task:
+Generate 1-3 broad tags categorizing the main themes of the chat history, along with 1-3 more specific subtopic tags.
+
+### Guidelines:
+- Start with high-level domains (e.g. Science, Technology, Philosophy, Arts, Politics, Business, Health, Sports, Entertainment, Education)
+- Consider including relevant subfields/subdomains if they are strongly represented throughout the conversation
+- If content is too short (less than 3 messages) or too diverse, use only ["General"]
+- Use the chat's primary language; default to English if multilingual
+- Prioritize accuracy over specificity
+
+### Output:
+JSON format: { "tags": ["tag1", "tag2", "tag3"] }
+
+### Chat History:
+<chat_history>
+USER: which trade names were negative in months when entire firm PnL was positive
+ASSISTANT: | ValuationDate       | TradeName           |   TradePnL |   FirmPnL |
+|:--------------------|:--------------------|-----------:|----------:|
+| 2026-07-07 00:00:00 | EUR FXO 4mV Long AH |      -2186 |         9 |
+| 2026-07-07 00:00:00 | Long SFIZ6 RMDSSPRW |        -54 |        48 |
+| 2026-07-07 00:00:00 | SGD Basket YZ       |       -267 |        13 |
+
+**Trend:**
+
+```mermaid
+%%{init: 
+{
+    "theme": "base",
+        "themeVariables": {
+                "backgroundColor": "#FFFFFF",
+                "xyChart": {
+                    'width': 900,
+                    'height': 500,
+                    'xAxis': {
+                        'labelRotation': 45,
+                        'labelFontSize': 11
+                    }
+                }
+                "backgroundColor": "#F8FAFC",
+                "titleColor": "#0F172A",
+                "xAxisLabelColor": "#475569",
+                "xAxisTitleColor": "#0F172A",
+                "xAxisLineColor": "#CBD5E1",
+                "yAxisLabelColor": "#475569",
+                "yAxisTitleColor": "#0F172A",
+                "yAxisLineColor": "#CBD5E1",
+                "plotColorPalette": "#2563EB, #7C3AED, #059669"
+                }
+        }
+    }
+}%%
+xychart-beta horizontal
+    title "PnL Trend"
+    x-axis ["2026-07-07 00:00:00", "2026-07-07 00:00:00", "2026-07-07 00:00:00"]
+    y-axis "FirmPnL"
+    line [9.0, 48.0, 13.0]
+```
+
+
+
+**Analysis**
+
+Based on the provided context and the query results, I can answer your question about which trade names were negative in months when the entire firm's PnL was positive. Here's the summary:
+
+1. EUR FXO 4mV Long AH
+   - Valuation Date: 2026-07-07
+   - Trade PnL: -2,186
+   - Firm PnL: 9
+
+2. Long SFIZ6 RMDSSPRW
+   - Valuation Date: 2026-07-07
+   - Trade PnL: -54
+   - Firm PnL: 48
+
+3. SGD Basket YZ
+   - Valuation Date: 2026-07-07
+   - Trade PnL: -267
+   - Firm PnL: 13
+
+All these trade names had negative PnL on July 7, 2026, which was the last business day of that month. On this date, the entire firm's PnL was positive, while these specific trades showed losses.
+
+It's important to note that all these results are from the same date, which suggests that this was a month where the firm as a whole was profitable, but these particular trades underperformed.
+
+The firm's overall positive PnL on this date ranged from 9 to 48, while the individual trade losses ranged from -54 to -2,186. The most significant loss was from the "EUR FXO 4mV Long AH" trade, which had a negative PnL of -2,186 when the firm's overall PnL was 9.
+
+This information could be useful for analyzing which trades are underperforming when the firm is generally doing well, potentially highlighting areas for improvement or risk management.
+</chat_history>'
+2026-09-09 18:02:28,351 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:02:34,083 [INFO] mongodb-query-api - Request processed in 5.74 seconds.
+2026-09-09 18:03:16,365 [INFO] mongodb-query-api - Received completion request: 'which trade names were negative in months when entire firm PnL was positive for 2026'
+2026-09-09 18:03:16,370 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:03:21,285 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:03:34,074 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'ValuationDate': {'$gte': {'$date': '2026-01-01T00:00:00Z'}, '$lte': {'$date': '2026-12-31T23:59:59Z'}}}}, {'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}}, 'lastBusinessDay': {'$max': '$ValuationDate'}}}, {'$sort': {'_id.year': 1, '_id.month': 1}}, {'$lookup': {'from': 'PnLCOB', 'let': {'lastDay': '$lastBusinessDay'}, 'pipeline': [{'$match': {'$expr': {'$and': [{'$eq': ['$ValuationDate', '$$lastDay']}, {'$eq': ['$TraderName', 'Aggregate']}]}}}, {'$group': {'_id': None, 'firmTotalPnL': {'$sum': '$MTDPnL'}}}], 'as': 'firmPnL'}}, {'$unwind': '$firmPnL'}, {'$match': {'firmPnL.firmTotalPnL': {'$gt': 0}}}, {'$lookup': {'from': 'PnLCOB', 'let': {'lastDay': '$lastBusinessDay'}, 'pipeline': [{'$match': {'$expr': {'$and': [{'$eq': ['$ValuationDate', '$$lastDay']}, {'$ne': ['$TraderName', 'Aggregate']}]}}}, {'$group': {'_id': '$TradeName', 'tradePnL': {'$sum': '$MTDPnL'}}}, {'$match': {'tradePnL': {'$lt': 0}}}], 'as': 'negativeTrades'}}, {'$unwind': '$negativeTrades'}, {'$project': {'_id': 0, 'valuationDate': '$lastBusinessDay', 'tradeName': '$negativeTrades._id', 'firmTotalPnL': '$firmPnL.firmTotalPnL', 'tradePnL': '$negativeTrades.tradePnL'}}, {'$sort': {'valuationDate': 1, 'tradeName': 1}}, {'$limit': 2000}]
+2026-09-09 18:03:34,112 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:03:42,386 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:03:45,905 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:03:51,153 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:03:58,638 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'ValuationDate': {'$gte': {'$date': '2026-01-01T00:00:00Z'}, '$lt': {'$date': '2027-01-01T00:00:00Z'}}}}, {'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}, 'TradeName': '$TradeName'}, 'lastDayOfMonth': {'$max': '$ValuationDate'}, 'tradePnL': {'$sum': '$MTDPnL'}}}, {'$group': {'_id': {'year': '$_id.year', 'month': '$_id.month'}, 'trades': {'$push': {'TradeName': '$_id.TradeName', 'PnL': '$tradePnL'}}, 'lastDayOfMonth': {'$first': '$lastDayOfMonth'}, 'totalPnL': {'$sum': '$tradePnL'}}}, {'$unwind': '$trades'}, {'$match': {'$expr': {'$and': [{'$lt': ['$trades.PnL', 0]}, {'$gt': ['$totalPnL', 0]}]}}}, {'$group': {'_id': '$trades.TradeName', 'count': {'$sum': 1}}}, {'$sort': {'count': -1}}, {'$limit': 2000}, {'$project': {'_id': 0, 'TradeName': '$_id', 'NegativeMonthCount': '$count'}}]
+2026-09-09 18:03:58,648 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:04:10,018 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:04:15,077 [ERROR] mongodb-query-api - MongoDB Driver Error: 10.1.2.40:27017: [WinError 10054] An existing connection was forcibly closed by the remote host (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6aa14c2a2e4a69477ddcb394, topology_type: Single, servers: [<ServerDescription ('10.1.2.40', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('10.1.2.40:27017: [WinError 10054] An existing connection was forcibly closed by the remote host (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+Traceback (most recent call last):
+  File "D:\Shailendra\PnL_chat\main.py", line 437, in execute_mongo_query
+    results = await cursor.to_list()
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Shailendra\.venv\Lib\site-packages\motor\core.py", line 1696, in _to_list
+    result = get_more_result.result()
+  File "D:\Shailendra\.venv\Lib\site-packages\motor\core.py", line 1917, in _on_started
+    pymongo_cursor = future.result()
+  File "C:\Users\lenovo\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\concurrent\futures\thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "C:\Users\lenovo\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\concurrent\futures\thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 3038, in aggregate
+    return self._aggregate(
+           ~~~~~~~~~~~~~~~^
+        _CollectionAggregationCommand,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 2935, in _aggregate
+    return self._database.client._retryable_read(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        cmd.get_cursor,
+        ^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        is_aggregate_write=cmd._performs_write,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2076, in _retryable_read
+    return self._retry_internal(
+           ~~~~~~~~~~~~~~~~~~~~^
+        func,
+        ^^^^^
+    ...<9 lines>...
+        is_aggregate_write=is_aggregate_write,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2038, in _retry_internal
+    ).run()
+      ~~~^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2811, in run
+    res = self._read() if self._is_read else self._write()
+          ~~~~~~~~~~^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 3027, in _read
+    self._server = self._get_server()
+                   ~~~~~~~~~~~~~~~~^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2975, in _get_server
+    return self._client._select_server(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._server_selector,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        operation_id=self._operation_id,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1851, in _select_server
+    server = topology.select_server(
+        server_selector,
+    ...<2 lines>...
+        operation_id=operation_id,
+    )
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 428, in select_server
+    server = self._select_server(
+        selector,
+    ...<4 lines>...
+        operation_id=operation_id,
+    )
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 402, in _select_server
+    servers = self.select_servers(
+        selector,
+    ...<4 lines>...
+        deprioritized_servers,
+    )
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 298, in select_servers
+    server_descriptions = self._select_servers_loop(
+        selector,
+    ...<4 lines>...
+        deprioritized_servers=deprioritized_servers,
+    )
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 359, in _select_servers_loop
+    raise ServerSelectionTimeoutError(
+        f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+    )
+pymongo.errors.ServerSelectionTimeoutError: 10.1.2.40:27017: [WinError 10054] An existing connection was forcibly closed by the remote host (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6aa14c2a2e4a69477ddcb394, topology_type: Single, servers: [<ServerDescription ('10.1.2.40', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('10.1.2.40:27017: [WinError 10054] An existing connection was forcibly closed by the remote host (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+2026-09-09 18:04:15,408 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:04:19,473 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:04:27,890 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'ValuationDate': {'$gte': {'$date': '2026-01-01T00:00:00Z'}, '$lt': {'$date': '2027-01-01T00:00:00Z'}}}}, {'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}, 'TradeName': '$TradeName'}, 'lastBusinessDay': {'$max': '$ValuationDate'}, 'TradeNameMTDPnL': {'$sum': '$MTDPnL'}}}, {'$group': {'_id': {'year': '$_id.year', 'month': '$_id.month'}, 'lastBusinessDay': {'$first': '$lastBusinessDay'}, 'TradeNameData': {'$push': {'TradeName': '$_id.TradeName', 'MTDPnL': '$TradeNameMTDPnL'}}, 'TotalMTDPnL': {'$sum': '$TradeNameMTDPnL'}}}, {'$match': {'TotalMTDPnL': {'$gt': 0}}}, {'$unwind': '$TradeNameData'}, {'$match': {'TradeNameData.MTDPnL': {'$lt': 0}}}, {'$group': {'_id': '$TradeNameData.TradeName', 'count': {'$sum': 1}}}, {'$sort': {'count': -1}}, {'$limit': 2000}, {'$project': {'_id': 0, 'TradeName': '$_id', 'count': 1}}]
+2026-09-09 18:04:27,900 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:04:34,515 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:04:40,389 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:04:44,775 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:04:53,778 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'ValuationDate': {'$gte': {'$date': '2026-01-01T00:00:00Z'}, '$lt': {'$date': '2027-01-01T00:00:00Z'}}}}, {'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}}, 'lastDayOfMonth': {'$max': '$ValuationDate'}}}, {'$lookup': {'from': 'PnLCOB', 'let': {'lastDay': '$lastDayOfMonth'}, 'pipeline': [{'$match': {'$expr': {'$eq': ['$ValuationDate', '$$lastDay']}}}, {'$group': {'_id': {'TradeName': '$TradeName', 'month': {'$month': '$ValuationDate'}}, 'tradePnL': {'$sum': '$MTDPnL'}, 'totalPnL': {'$sum': {'$cond': [{'$eq': ['$TraderName', 'Aggregate']}, '$MTDPnL', 0]}}}}], 'as': 'monthlyData'}}, {'$unwind': '$monthlyData'}, {'$match': {'$expr': {'$and': [{'$lt': ['$monthlyData.tradePnL', 0]}, {'$gt': ['$monthlyData.totalPnL', 0]}]}}}, {'$group': {'_id': '$monthlyData._id.TradeName', 'count': {'$sum': 1}}}, {'$sort': {'count': -1}}, {'$limit': 20}, {'$project': {'_id': 0, 'TradeName': '$_id', 'NegativePnLCount': '$count'}}]
+2026-09-09 18:04:53,789 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:05:00,917 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:05:03,588 [INFO] mongodb-query-api - | TradeName           |   NegativePnLCount |
+|:--------------------|-------------------:|
+| EUR FXO 4mV Long AH |                  1 |
+| SGD Basket YZ       |                  1 |
+| Long SFIZ6 RMDSSPRW |                  1 |
+
+**Trend:**
+
+```mermaid
+%%{init: 
+{
+    "theme": "base",
+        "themeVariables": {
+                "backgroundColor": "#FFFFFF",
+                "xyChart": {
+                    'width': 900,
+                    'height': 500,
+                    'xAxis': {
+                        'labelRotation': 45,
+                        'labelFontSize': 11
+                    }
+                }
+                "backgroundColor": "#F8FAFC",
+                "titleColor": "#0F172A",
+                "xAxisLabelColor": "#475569",
+                "xAxisTitleColor": "#0F172A",
+                "xAxisLineColor": "#CBD5E1",
+                "yAxisLabelColor": "#475569",
+                "yAxisTitleColor": "#0F172A",
+                "yAxisLineColor": "#CBD5E1",
+                "plotColorPalette": "#2563EB, #7C3AED, #059669"
+                }
+        }
+    }
+}%%
+xychart-beta horizontal
+    title "PnL Trend"
+    x-axis ["EUR FXO 4mV Long AH", "SGD Basket YZ", "Long SFIZ6 RMDSSPRW"]
+    y-axis "NegativePnLCount"
+    line [1.0, 1.0, 1.0]
+```
+
+
+2026-09-09 18:05:03,604 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:05:11,472 [INFO] mongodb-query-api - Request processed in 115.11 seconds.
+2026-09-09 18:05:11,619 [INFO] mongodb-query-api - Received completion request: '### Task:
+Suggest 3-5 relevant follow-up questions or prompts that the user might naturally ask next in this conversation as a **user**, based on the chat history, to help continue or deepen the discussion.
+### Guidelines:
+- Write all follow-up questions from the user’s point of view, directed to the assistant.
+- Make questions concise, clear, and directly related to the discussed topic(s).
+- Only suggest follow-ups that make sense given the chat content and do not repeat what was already covered.
+- If the conversation is very short or not specific, suggest more general (but relevant) follow-ups the user might ask.
+- Use the conversation's primary language; default to English if multilingual.
+- Response must be a JSON object with a "follow_ups" key containing an array of strings, no extra text or formatting.
+### Output:
+JSON format: { "follow_ups": ["Question 1?", "Question 2?", "Question 3?"] }
+### Chat History:
+<chat_history>
+USER: which trade names were negative in months when entire firm PnL was positive for 2026
+ASSISTANT: | TradeName           |   NegativePnLCount |
+|:--------------------|-------------------:|
+| EUR FXO 4mV Long AH |                  1 |
+| SGD Basket YZ       |                  1 |
+| Long SFIZ6 RMDSSPRW |                  1 |
+
+**Trend:**
+
+```mermaid
+%%{init: 
+{
+    "theme": "base",
+        "themeVariables": {
+                "backgroundColor": "#FFFFFF",
+                "xyChart": {
+                    'width': 900,
+                    'height': 500,
+                    'xAxis': {
+                        'labelRotation': 45,
+                        'labelFontSize': 11
+                    }
+                }
+                "backgroundColor": "#F8FAFC",
+                "titleColor": "#0F172A",
+                "xAxisLabelColor": "#475569",
+                "xAxisTitleColor": "#0F172A",
+                "xAxisLineColor": "#CBD5E1",
+                "yAxisLabelColor": "#475569",
+                "yAxisTitleColor": "#0F172A",
+                "yAxisLineColor": "#CBD5E1",
+                "plotColorPalette": "#2563EB, #7C3AED, #059669"
+                }
+        }
+    }
+}%%
+xychart-beta horizontal
+    title "PnL Trend"
+    x-axis ["EUR FXO 4mV Long AH", "SGD Basket YZ", "Long SFIZ6 RMDSSPRW"]
+    y-axis "NegativePnLCount"
+    line [1.0, 1.0, 1.0]
+```
+
+
+
+**Analysis**
+
+Based on the query results, I can provide you with the information about which trade names were negative in months when the entire firm's PnL was positive for 2026. Here's a summary of the findings:
+
+1. EUR FXO 4mV Long AH
+   - Negative PnL Count: 1 month
+
+2. SGD Basket YZ
+   - Negative PnL Count: 1 month
+
+3. Long SFIZ6 RMDSSPRW
+   - Negative PnL Count: 1 month
+
+These three trade names each had one month in 2026 where they showed negative PnL while the entire firm's PnL was positive. 
+
+It's important to note that:
+
+1. The query was limited to show only the top 20 results, but we only received 3 results. This suggests that there were only 3 trade names that met the criteria in 2026.
+
+2. Each of these trade names had only one occurrence of negative PnL when the firm's total PnL was positive. This indicates that these instances were relatively rare in 2026.
+
+3. The low count and limited number of trade names suggest that in 2026, it was uncommon for individual trade names to have negative PnL when the firm's overall PnL was positive.
+
+This information could be useful for risk management and performance analysis, as it highlights specific trades that underperformed relative to the firm's overall performance in certain months of 2026. However, given the low frequency of these occurrences, it appears that most trade names generally aligned with the firm's overall positive performance throughout the year.
+</chat_history>'
+2026-09-09 18:05:11,623 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:05:15,165 [INFO] mongodb-query-api - Request processed in 3.54 seconds.
+2026-09-09 18:06:59,413 [INFO] mongodb-query-api - Received completion request: 'which trade names were negative in months when entire firm PnL was positive'
+2026-09-09 18:06:59,419 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:04,860 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:13,709 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'TraderName': {'$in': ['Aggregate', {'$ne': 'Aggregate'}]}}}, {'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}, 'TradeName': '$TradeName', 'TraderName': '$TraderName'}, 'totalPnL': {'$sum': '$MTDPnL'}}}, {'$group': {'_id': {'year': '$_id.year', 'month': '$_id.month', 'TradeName': '$_id.TradeName'}, 'tradePnL': {'$sum': {'$cond': [{'$ne': ['$_id.TraderName', 'Aggregate']}, '$totalPnL', 0]}}, 'firmPnL': {'$sum': {'$cond': [{'$eq': ['$_id.TraderName', 'Aggregate']}, '$totalPnL', 0]}}}}, {'$group': {'_id': {'year': '$_id.year', 'month': '$_id.month'}, 'firmPnL': {'$first': '$firmPnL'}, 'tradeNames': {'$push': {'TradeName': '$_id.TradeName', 'PnL': '$tradePnL'}}}}, {'$match': {'firmPnL': {'$gt': 0}}}, {'$project': {'_id': 0, 'year': '$_id.year', 'month': '$_id.month', 'firmPnL': 1, 'negativeTradeNames': {'$filter': {'input': '$tradeNames', 'as': 'trade', 'cond': {'$lt': ['$$trade.PnL', 0]}}}}}, {'$sort': {'year': -1, 'month': -1}}, {'$limit': 2000}]
+2026-09-09 18:07:13,714 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:21,162 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:07:21,299 [ERROR] mongodb-query-api - MongoDB Driver Error: cannot nest $ under $in, full error: {'ok': 0.0, 'errmsg': 'cannot nest $ under $in', 'code': 2, 'codeName': 'BadValue'}
+Traceback (most recent call last):
+  File "D:\Shailendra\PnL_chat\main.py", line 437, in execute_mongo_query
+    results = await cursor.to_list()
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Shailendra\.venv\Lib\site-packages\motor\core.py", line 1696, in _to_list
+    result = get_more_result.result()
+  File "D:\Shailendra\.venv\Lib\site-packages\motor\core.py", line 1917, in _on_started
+    pymongo_cursor = future.result()
+  File "C:\Users\lenovo\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\concurrent\futures\thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "C:\Users\lenovo\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\concurrent\futures\thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 3038, in aggregate
+    return self._aggregate(
+           ~~~~~~~~~~~~~~~^
+        _CollectionAggregationCommand,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 2935, in _aggregate
+    return self._database.client._retryable_read(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        cmd.get_cursor,
+        ^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        is_aggregate_write=cmd._performs_write,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2076, in _retryable_read
+    return self._retry_internal(
+           ~~~~~~~~~~~~~~~~~~~~^
+        func,
+        ^^^^^
+    ...<9 lines>...
+        is_aggregate_write=is_aggregate_write,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2038, in _retry_internal
+    ).run()
+      ~~~^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2811, in run
+    res = self._read() if self._is_read else self._write()
+          ~~~~~~~~~~^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 3043, in _read
+    return self._func(self._session, self._server, conn, read_pref)  # type: ignore
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\aggregation.py", line 162, in get_cursor
+    result = conn.command(
+        self._database.name,
+    ...<9 lines>...
+        user_fields=self._user_fields,
+    )
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\helpers.py", line 53, in inner
+    return func(*args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\pool.py", line 403, in command
+    return command(
+        self,
+    ...<20 lines>...
+        write_concern=write_concern,
+    )
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\network.py", line 212, in command
+    helpers_shared._check_command_response(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        response_doc,
+        ^^^^^^^^^^^^^
+    ...<2 lines>...
+        parse_write_concern_error=parse_write_concern_error,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\helpers_shared.py", line 284, in _check_command_response
+    raise OperationFailure(errmsg, code, response, max_wire_version)
+pymongo.errors.OperationFailure: cannot nest $ under $in, full error: {'ok': 0.0, 'errmsg': 'cannot nest $ under $in', 'code': 2, 'codeName': 'BadValue'}
+2026-09-09 18:07:21,424 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:26,167 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:33,739 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'TraderName': {'$in': ['Aggregate', {'$ne': 'Aggregate'}]}}}, {'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}, 'TradeName': '$TradeName', 'TraderName': '$TraderName'}, 'totalPnL': {'$sum': '$MTDPnL'}}}, {'$group': {'_id': {'year': '$_id.year', 'month': '$_id.month', 'TradeName': '$_id.TradeName'}, 'tradePnL': {'$sum': {'$cond': [{'$ne': ['$_id.TraderName', 'Aggregate']}, '$totalPnL', 0]}}, 'firmPnL': {'$sum': {'$cond': [{'$eq': ['$_id.TraderName', 'Aggregate']}, '$totalPnL', 0]}}}}, {'$match': {'firmPnL': {'$gt': 0}}}, {'$match': {'tradePnL': {'$lt': 0}}}, {'$sort': {'_id.year': -1, '_id.month': -1}}, {'$limit': 2000}, {'$project': {'_id': 0, 'year': '$_id.year', 'month': '$_id.month', 'TradeName': '$_id.TradeName', 'tradePnL': 1, 'firmPnL': 1}}]
+2026-09-09 18:07:33,746 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:39,811 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:07:39,911 [ERROR] mongodb-query-api - MongoDB Driver Error: cannot nest $ under $in, full error: {'ok': 0.0, 'errmsg': 'cannot nest $ under $in', 'code': 2, 'codeName': 'BadValue'}
+Traceback (most recent call last):
+  File "D:\Shailendra\PnL_chat\main.py", line 437, in execute_mongo_query
+    results = await cursor.to_list()
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Shailendra\.venv\Lib\site-packages\motor\core.py", line 1696, in _to_list
+    result = get_more_result.result()
+  File "D:\Shailendra\.venv\Lib\site-packages\motor\core.py", line 1917, in _on_started
+    pymongo_cursor = future.result()
+  File "C:\Users\lenovo\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\concurrent\futures\thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "C:\Users\lenovo\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\concurrent\futures\thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 3038, in aggregate
+    return self._aggregate(
+           ~~~~~~~~~~~~~~~^
+        _CollectionAggregationCommand,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\collection.py", line 2935, in _aggregate
+    return self._database.client._retryable_read(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        cmd.get_cursor,
+        ^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        is_aggregate_write=cmd._performs_write,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2076, in _retryable_read
+    return self._retry_internal(
+           ~~~~~~~~~~~~~~~~~~~~^
+        func,
+        ^^^^^
+    ...<9 lines>...
+        is_aggregate_write=is_aggregate_write,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
+    return func(self, *args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2038, in _retry_internal
+    ).run()
+      ~~~^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2811, in run
+    res = self._read() if self._is_read else self._write()
+          ~~~~~~~~~~^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 3043, in _read
+    return self._func(self._session, self._server, conn, read_pref)  # type: ignore
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\aggregation.py", line 162, in get_cursor
+    result = conn.command(
+        self._database.name,
+    ...<9 lines>...
+        user_fields=self._user_fields,
+    )
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\helpers.py", line 53, in inner
+    return func(*args, **kwargs)
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\pool.py", line 403, in command
+    return command(
+        self,
+    ...<20 lines>...
+        write_concern=write_concern,
+    )
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\synchronous\network.py", line 212, in command
+    helpers_shared._check_command_response(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        response_doc,
+        ^^^^^^^^^^^^^
+    ...<2 lines>...
+        parse_write_concern_error=parse_write_concern_error,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Shailendra\.venv\Lib\site-packages\pymongo\helpers_shared.py", line 284, in _check_command_response
+    raise OperationFailure(errmsg, code, response, max_wire_version)
+pymongo.errors.OperationFailure: cannot nest $ under $in, full error: {'ok': 0.0, 'errmsg': 'cannot nest $ under $in', 'code': 2, 'codeName': 'BadValue'}
+2026-09-09 18:07:39,964 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:44,385 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:53,185 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}, 'TradeName': {'$cond': [{'$or': [{'$eq': ['$TradeName', None]}, {'$eq': ['$TradeName', '']}]}, 'Firm Total', '$TradeName']}}, 'totalPnL': {'$sum': '$NAVinUSD'}}}, {'$group': {'_id': {'year': '$_id.year', 'month': '$_id.month'}, 'firmTotalPnL': {'$sum': {'$cond': [{'$eq': ['$_id.TradeName', 'Firm Total']}, '$totalPnL', 0]}}, 'tradeNames': {'$push': {'TradeName': '$_id.TradeName', 'PnL': '$totalPnL'}}}}, {'$match': {'firmTotalPnL': {'$gt': 0}}}, {'$project': {'year': '$_id.year', 'month': '$_id.month', 'firmTotalPnL': 1, 'negativeTradeNames': {'$filter': {'input': '$tradeNames', 'as': 'trade', 'cond': {'$and': [{'$ne': ['$$trade.TradeName', 'Firm Total']}, {'$lt': ['$$trade.PnL', 0]}]}}}}}, {'$sort': {'year': -1, 'month': -1}}, {'$limit': 2000}, {'$project': {'_id': 0, 'year': 1, 'month': 1, 'firmTotalPnL': 1, 'negativeTradeNames': 1}}]
+2026-09-09 18:07:53,197 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:07:59,712 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:08:07,181 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:08:12,094 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:08:18,376 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}}, 'lastBusinessDay': {'$max': '$ValuationDate'}}}, {'$sort': {'_id.year': -1, '_id.month': -1}}, {'$lookup': {'from': 'PnLCOB', 'let': {'lastDay': '$lastBusinessDay'}, 'pipeline': [{'$match': {'$expr': {'$eq': ['$ValuationDate', '$$lastDay']}}}, {'$group': {'_id': None, 'totalMTDPnL': {'$sum': '$MTDPnL'}}}], 'as': 'monthlyPnL'}}, {'$unwind': '$monthlyPnL'}, {'$project': {'_id': 0, 'year': '$_id.year', 'month': '$_id.month', 'totalMTDPnL': '$monthlyPnL.totalMTDPnL', 'lastBusinessDay': 1}}, {'$sort': {'year': -1, 'month': -1}}, {'$limit': 10}]
+2026-09-09 18:08:18,386 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:08:23,727 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:08:29,143 [INFO] mongodb-query-api - |   month | lastBusinessDay     |   year |   totalMTDPnL |
+|--------:|:--------------------|-------:|--------------:|
+|      12 | 2025-12-31 00:00:00 |   2025 |       5352798 |
+|      11 | 2025-11-28 00:00:00 |   2025 |     -41734236 |
+|      10 | 2025-10-31 00:00:00 |   2025 |       -661520 |
+|       9 | 2025-09-30 00:00:00 |   2025 |      -7621266 |
+|       8 | 2025-08-29 00:00:00 |   2025 |      32487128 |
+|       7 | 2026-07-07 00:00:00 |   2026 |       4998095 |
+|       7 | 2025-07-31 00:00:00 |   2025 |       3721414 |
+|       6 | 2026-06-30 00:00:00 |   2026 |      30015994 |
+|       6 | 2025-06-30 00:00:00 |   2025 |      18123994 |
+|       5 | 2026-05-29 00:00:00 |   2026 |      14839572 |
+
+**Trend:**
+
+```mermaid
+%%{init: 
+{
+    "theme": "base",
+        "themeVariables": {
+                "backgroundColor": "#FFFFFF",
+                "xyChart": {
+                    'width': 900,
+                    'height': 500,
+                    'xAxis': {
+                        'labelRotation': 45,
+                        'labelFontSize': 11
+                    }
+                }
+                "backgroundColor": "#F8FAFC",
+                "titleColor": "#0F172A",
+                "xAxisLabelColor": "#475569",
+                "xAxisTitleColor": "#0F172A",
+                "xAxisLineColor": "#CBD5E1",
+                "yAxisLabelColor": "#475569",
+                "yAxisTitleColor": "#0F172A",
+                "yAxisLineColor": "#CBD5E1",
+                "plotColorPalette": "#2563EB, #7C3AED, #059669"
+                }
+        }
+    }
+}%%
+xychart-beta horizontal
+    title "PnL Trend"
+    x-axis ["12", "11", "10", "9", "8", "7", "7", "6", "6", "5"]
+    y-axis "totalMTDPnL"
+    line [5352798.0, -41734236.0, -661520.0, -7621266.0, 32487128.0, 4998095.0, 3721414.0, 30015994.0, 18123994.0, 14839572.0]
+```
+
+
+2026-09-09 18:08:29,157 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:08:38,080 [INFO] mongodb-query-api - Request processed in 98.67 seconds.
+2026-09-09 18:12:22,743 [INFO] mongodb-query-api - Initializing Async Motor MongoDB Client...
+2026-09-09 18:12:22,820 [INFO] mongodb-query-api - Initialized Motor Client for database: 'ValuationSummary04June'
+2026-09-09 18:12:23,078 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-09 18:12:23,785 [INFO] mongodb-query-api - Successfully initialized ChatBedrockConverse client.
+2026-09-09 18:12:24,252 [INFO] mongodb-query-api - Pinged MongoDB cluster asynchronously. Connection verified.
+2026-09-09 18:12:32,545 [INFO] mongodb-query-api - Initializing Async Motor MongoDB Client...
+2026-09-09 18:12:32,557 [INFO] mongodb-query-api - Initialized Motor Client for database: 'ValuationSummary04June'
+2026-09-09 18:12:32,629 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-09 18:12:33,086 [INFO] mongodb-query-api - Successfully initialized ChatBedrockConverse client.
+2026-09-09 18:12:33,559 [INFO] mongodb-query-api - Pinged MongoDB cluster asynchronously. Connection verified.
+2026-09-09 18:12:40,016 [INFO] mongodb-query-api - Received completion request: 'which trade names were negative in months when entire firm PnL was positive'
+2026-09-09 18:12:40,088 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:12:45,422 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:12:54,487 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}}, 'lastBusinessDay': {'$max': '$ValuationDate'}}}, {'$sort': {'lastBusinessDay': -1}}, {'$lookup': {'from': 'PnLCOB', 'let': {'lastDay': '$lastBusinessDay'}, 'pipeline': [{'$match': {'$expr': {'$eq': ['$ValuationDate', '$$lastDay']}}}, {'$group': {'_id': {'ValuationDate': '$ValuationDate', 'TradeName': '$TradeName'}, 'TradeNamePnL': {'$sum': '$MTDPnL'}}}], 'as': 'tradeNamePnLs'}}, {'$unwind': '$tradeNamePnLs'}, {'$group': {'_id': '$lastBusinessDay', 'firmPnL': {'$sum': {'$cond': [{'$eq': ['$tradeNamePnLs._id.TradeName', 'Aggregate']}, '$tradeNamePnLs.TradeNamePnL', 0]}}, 'tradeNamePnLs': {'$push': {'TradeName': '$tradeNamePnLs._id.TradeName', 'PnL': '$tradeNamePnLs.TradeNamePnL'}}}}, {'$match': {'firmPnL': {'$gt': 0}}}, {'$sort': {'_id': -1}}, {'$project': {'_id': 0, 'ValuationDate': '$_id', 'firmPnL': 1, 'tradeNamePnLs': 1}}, {'$limit': 2000}]
+2026-09-09 18:12:54,494 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:13:01,343 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:13:06,872 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:13:11,780 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:13:19,275 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'TraderName': 'Aggregate', 'ValuationDate': {'$gte': {'$date': '2022-06-01T00:00:00Z'}}}}, {'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}}, 'lastBusinessDay': {'$max': '$ValuationDate'}}}, {'$sort': {'lastBusinessDay': -1}}, {'$limit': 12}, {'$lookup': {'from': 'PnLCOB', 'let': {'lastDay': '$lastBusinessDay'}, 'pipeline': [{'$match': {'$expr': {'$and': [{'$eq': ['$ValuationDate', '$$lastDay']}, {'$eq': ['$TraderName', 'Aggregate']}]}}}], 'as': 'monthlyData'}}, {'$unwind': '$monthlyData'}, {'$project': {'_id': 0, 'ValuationDate': '$lastBusinessDay', 'MTDPnL': '$monthlyData.MTDPnL'}}, {'$sort': {'ValuationDate': -1}}, {'$limit': 2000}]
+2026-09-09 18:13:19,283 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:13:24,212 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:13:27,110 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:13:31,248 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:13:38,389 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'TraderName': 'Aggregate'}}, {'$group': {'_id': {'year': {'$year': '$ValuationDate'}, 'month': {'$month': '$ValuationDate'}}, 'lastBusinessDay': {'$max': '$ValuationDate'}}}, {'$sort': {'lastBusinessDay': -1}}, {'$limit': 6}, {'$lookup': {'from': 'PnLCOB', 'let': {'lastDay': '$lastBusinessDay'}, 'pipeline': [{'$match': {'$expr': {'$and': [{'$eq': ['$ValuationDate', '$$lastDay']}, {'$eq': ['$TraderName', 'Aggregate']}]}}}, {'$group': {'_id': None, 'MTDPnL': {'$sum': '$MTDPnL'}}}], 'as': 'monthlyPnL'}}, {'$unwind': '$monthlyPnL'}, {'$project': {'_id': 0, 'ValuationDate': '$lastBusinessDay', 'FirmPnL': '$monthlyPnL.MTDPnL'}}, {'$sort': {'ValuationDate': -1}}, {'$limit': 2000}]
+2026-09-09 18:13:38,397 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:13:43,634 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:13:47,532 [INFO] mongodb-query-api - | ValuationDate       |   FirmPnL |
+|:--------------------|----------:|
+| 2026-07-07 00:00:00 |   4266172 |
+| 2026-06-30 00:00:00 |  15007997 |
+| 2026-05-29 00:00:00 |   7419786 |
+| 2026-04-30 00:00:00 |  31187308 |
+| 2026-03-31 00:00:00 | -60347586 |
+| 2026-02-27 00:00:00 |  10606771 |
+
+**Trend:**
+
+```mermaid
+%%{init: 
+{
+    "theme": "base",
+        "themeVariables": {
+                "backgroundColor": "#FFFFFF",
+                "xyChart": {
+                    'width': 900,
+                    'height': 500,
+                    'xAxis': {
+                        'labelRotation': 45,
+                        'labelFontSize': 11
+                    }
+                }
+                "backgroundColor": "#F8FAFC",
+                "titleColor": "#0F172A",
+                "xAxisLabelColor": "#475569",
+                "xAxisTitleColor": "#0F172A",
+                "xAxisLineColor": "#CBD5E1",
+                "yAxisLabelColor": "#475569",
+                "yAxisTitleColor": "#0F172A",
+                "yAxisLineColor": "#CBD5E1",
+                "plotColorPalette": "#2563EB, #7C3AED, #059669"
+                }
+        }
+    }
+}%%
+xychart-beta horizontal
+    title "PnL Trend"
+    x-axis ["2026-07-07 00:00:00", "2026-06-30 00:00:00", "2026-05-29 00:00:00", "2026-04-30 00:00:00", "2026-03-31 00:00:00", "2026-02-27 00:00:00"]
+    y-axis "FirmPnL"
+    line [4266172.0, 15007997.0, 7419786.0, 31187308.0, -60347586.0, 10606771.0]
+```
+
+
+2026-09-09 18:13:47,541 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:13:56,336 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:14:00,169 [INFO] mongodb-query-api - Generated Pipeline Query: [{'$match': {'ValuationDate': {'$date': '2026-07-07T00:00:00Z'}}}, {'$group': {'_id': '$TradeName', 'MTDPnL': {'$sum': '$MTDPnL'}}}, {'$match': {'MTDPnL': {'$lt': 0}}}, {'$sort': {'MTDPnL': 1}}, {'$project': {'_id': 0, 'TradeName': '$_id', 'MTDPnL': 1}}, {'$limit': 2000}]
+2026-09-09 18:14:00,179 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:14:04,016 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-09 18:14:04,292 [INFO] mongodb-query-api - | TradeName                                      |   MTDPnL |
+|:-----------------------------------------------|---------:|
+| Long KOSPI2 RMDSSPRW                           |  -649030 |
+| A50 ND                                         |  -619834 |
+| KRW u26-1y receiver 2026 RMDSSPRW              |  -596780 |
+| JPY 1y2y v KRW 2y1y RMDSSPRW                   |  -511867 |
+| RPGB 6.25 Jan34 DanJH_60401                    |  -509028 |
+| AUD u27-1y Rec RMDSSPRW                        |  -497641 |
+| Short Gold 2026 SQWRMRR                        |  -443556 |
+| Long Gilts RR                                  |  -440609 |
+| 10y ust ND                                     |  -417483 |
+| AUD m28-1y Rec RMDSSPRW                        |  -363380 |
+| Margin                                         |  -269944 |
+| SGDCNH 20Aug26 5.25 DigiP DanJH_60212          |  -264616 |
+| Balance Clearing                               |  -256785 |
+| INR 5y Rec gome                                |  -241780 |
+| THOR 1y1y NDD RMDSSPRW                         |  -217618 |
+| PIFKSA 6.25 56 so NDHLRR                       |  -212193 |
+| AUD Z27-1y RMDSSPRW ACD                        |  -210611 |
+| SFRU6 PS RMDSSPRW                              |  -191637 |
+| INR 11/21 RMDSSPRW ard                         |  -187784 |
+| JPY 1y2y v KRW 1y1y RMDSSPRW                   |  -186872 |
+| FR109 2026 RMDSSPRW                            |  -185142 |
+| Long A50 RR                                    |  -175669 |
+| Long KAA Futs DanJH_60417                      |  -169025 |
+| Long YM 2026 RMDSSPRW                          |  -161477 |
+| AUD Z27-1y 3.95 vs 3.5 Spd RMDSSPRW ACD        |  -158444 |
+| KRW 2y1y rec RMDSSPRW                          |  -153483 |
+| USDTWD RR AFA                                  |  -151906 |
+| Long A50 HL                                    |  -149757 |
+| USDJPY/CHFJPY 6m CorrSwap V 2026 HC            |  -147975 |
+| JPY 23/33/45 RMDSSPRW                          |  -143037 |
+| TWD 10y rec cta RMDSSPRW                       |  -142621 |
+| JPY 21/14 RMDSSPRW                             |  -141710 |
+| AUD z27-1y 4.40 v 4.05 Rcver Sprd RMDSSPRW ACD |  -136766 |
+| CGB 30y 2500006 HL                             |  -125473 |
+| JPY 4y4y v 2y8y RMDSSPRW                       |  -122831 |
+| TWD FXSWAP 6x24 RRAH                           |  -122803 |
+| IRH7U7 fltnr RMDSSPRW                          |  -119655 |
+| Non-trading Expenses                           |  -116667 |
+| Indogb FR109 DanJH_60311                       |  -115190 |
+| RBA Sep26 v Nov26 Pay RMDSSPRW                 |  -114993 |
+| JPYKRW RVFX RR                                 |  -100129 |
+| SFRM7 CS RMDSSPRW                              |   -98805 |
+| Short XOVER CDS ph NDHLRR                      |   -98494 |
+| KRW Impl 6m6m RMDSSPRW                         |   -95783 |
+| Short JSTLIN 32 cbb NDHLRR                     |   -90319 |
+| FR109 RR                                       |   -89667 |
+| USDCHF 6m VolSwap V 2026 HC                    |   -84964 |
+| Long UXY ph HL                                 |   -84219 |
+| IGB 2055 RR                                    |   -78792 |
+| EURCHF FX AH                                   |   -78544 |
+| RPGB 08/33 RMDSSPRW                            |   -75962 |
+| KRW u26-1y rec RR                              |   -74043 |
+| SGDX Syn 1y RMDSSPRW 4Aug CB                   |   -73419 |
+| IRZ6 Short RMDSSPRW                            |   -72669 |
+| GBPINR RR RVFX                                 |   -72230 |
+| SUNAC 2026 cb 6.8 MCB 1 abd HLNDRR             |   -70100 |
+| CNY 5Y PAY HL                                  |   -69290 |
+| NZDUSD 1Y0.5790Vol YZ                          |   -69164 |
+| AUD U27-1y 4.15 vs 3.85 Rcver Spd RMDSSPRW ACD |   -67797 |
+| Short INDO bond/cds basis so NDHLRR            |   -65530 |
+| HKINTL 3.95 2056 HKD NI HLNDRR                 |   -63575 |
+| JPY FX AH                                      |   -63336 |
+| USDJPY 30Jul26 160P 158EKO DanJH_60630         |   -59542 |
+| SFRU6 CS vs SFRU7 CS RMDSSPRW                  |   -58480 |
+| KRW m28-1y RMDSSPRW                            |   -57839 |
+| Short Crude RR                                 |   -55314 |
+| SGDX Syn 1m11m RMDSSPRW 24Jul CB               |   -54520 |
+| Krw 1y1y ph HL                                 |   -53480 |
+| USDPHP DanJH_60615                             |   -53459 |
+| S2_Rec KRW/Pay NZD RRRM                        |   -52536 |
+| AUD FX AH                                      |   -50185 |
+| IDR FXO 2m Csp AH                              |   -48745 |
+| TWD FX AH                                      |   -48631 |
+| S1_Short AUDTWD RRRM                           |   -48191 |
+| NZDUSD/AUDNZD 9m VolSwap V 2026 HC             |   -47387 |
+| EUR FX AH                                      |   -46263 |
+| Short USDCAD 2026 SQWRMRR                      |   -45777 |
+| Short MONGOL 31 so NDHLRR                      |   -45027 |
+| USDCNH T 2026 HC                               |   -44830 |
+| HYUELE 31 ahgr NDHLRR                          |   -44459 |
+| NZD FX AH                                      |   -43323 |
+| CAD/EUR/JPY 2m Worstof RR                      |   -42956 |
+| SGDX Syn 1y RMDSSPRW 2oct CB                   |   -41981 |
+| USDCHF/USDJPY 3m CorrSwap V 2026 HC            |   -40865 |
+| EURKRW/USDKRW 6m CorrSwap V 2026 HC            |   -40518 |
+| SGDX Syn 1m11m RMDSSPRW 22Jul CB               |   -40413 |
+| Short INDON 4.85 33 NDHLRR                     |   -40294 |
+| SGDX Syn 1m11m RMDSSPRW 25Jul CB               |   -37166 |
+| AUDUSD/AUDNZD 9m VolSwap V 2026 HC             |   -37122 |
+| THOR h31-5y DanJH_60421                        |   -37054 |
+| TWD FXO 12mV Long AH                           |   -36806 |
+| USDIDR DanJH_60615                             |   -36197 |
+| EURCNH RR RVFX                                 |   -35198 |
+| Short FRIDPT 32 so NDHLRR                      |   -34967 |
+| Short EXIMBK 33 ahgr NDHLRR_1                  |   -34856 |
+| USDTHB DanJH_60615                             |   -31700 |
+| SGDX Syn 1m11m RMDSSPRW 29Jul CB               |   -31329 |
+| USDCNH 5w 6.73P 6.65EKO M 2026 HC              |   -31170 |
+| Long AUDUSD 2026 SQWRMRR                       |   -30420 |
+| CNH FXO 2m Dig Psp AH                          |   -29712 |
+| SGDX Syn 1y RMDSSPRW 30Jul CB                  |   -28761 |
+| Short IRBIN 32 icc NDHLRR                      |   -28002 |
+| CNH FX AH                                      |   -27954 |
+| USDCNH YZ                                      |   -27854 |
+| USDKRW 1y VolSwap V 2026 HC                    |   -27261 |
+| Short DIALIN 29 icc NDHLRR                     |   -27004 |
+| Short INDON 5.25 42 so NDHLRR                  |   -26661 |
+| EURSGD/CADSGD 1y CorrSwap V 2026 HC            |   -26413 |
+| SGDX Syn 3m9m RMDSSPRW 10Jul CB                |   -26318 |
+| Nwdevl 4.125 2029 cp RR                        |   -26166 |
+| KRW FX AH                                      |   -25954 |
+| EURUSD YZ                                      |   -25588 |
+| AUDJPY 6m 100 DigiP RR                         |   -24985 |
+| Jul26 BoJ RMDSSPRW                             |   -24658 |
+| SGDX Syn 1m11m RMDSSPRW 23Jul CB               |   -24335 |
+| EURUSD6W DKO SP1                               |   -24013 |
+| SGDX Syn 3m9m RMDSSPRW 14Jul CB                |   -23975 |
+| NOKSEK RR RVFX                                 |   -23176 |
+| SGDX Syn 1y RMDSSPRW 12Nov CB                  |   -23069 |
+| GBP FX AH                                      |   -22440 |
+| SGDX Syn 1y RMDSSPRW 21Nov CB                  |   -22400 |
+| SGDX Syn 1y RMDSSPRW 1Sep CB                   |   -22202 |
+| THB Basket RR                                  |   -21747 |
+| RPGB 6.625 Aug33 DanJH_60421                   |   -21715 |
+| Dec26 RBA RMDSSPRW ACD                         |   -21549 |
+| Short DIALIN 29 icc NDHLRR1                    |   -21421 |
+| SGDX Syn 1y RMDSSPRW 17Oct CB                  |   -21338 |
+| SGDX Syn 1m11m RMDSSPRW 18Jul CB               |   -21298 |
+| HKD FXO 2m Csp AH                              |   -21105 |
+| CNH CCS z5 2x5 HLRW                            |   -20998 |
+| USDKRW YZ                                      |   -20788 |
+| Long KE RR                                     |   -20437 |
+| USDJPY Jul6 160.5x159.5 PutSprd RR             |   -20248 |
+| SGDX Syn 1y RMDSSPRW 3Oct CB                   |   -20153 |
+| SGDX Syn 6m6m RMDSSPRW 18Sep CB                |   -19892 |
+| Cogard 5.0 2032 abd HLNDRR                     |   -19867 |
+| Long TU ph HL                                  |   -19656 |
+| EUR FXO 9m 10d Cvx AH                          |   -19232 |
+| SGDX Syn 1y RMDSSPRW 8Sep CB                   |   -18811 |
+| NZDUSD RR AFA                                  |   -18382 |
+| CHFSGD/JPYSGD 1y CorrSwap V 2026 HC            |   -18130 |
+| SGDX Syn 1y RMDSSPRW 29Sep CB                  |   -17866 |
+| AUDNZD/AUDCAD 1y CorrSwap V 2026 HC            |   -17616 |
+| MTRC 3.3 2036 HKD NI HLNDRR                    |   -16919 |
+| VIX Sep26 30/40CS RRYZ                         |   -16682 |
+| SGDX Syn 1m11m RMDSSPRW 27Aug CB               |   -16659 |
+| GS/CATL 2029 300750 CNH cbb HLNDRR             |   -16434 |
+| Short haohua 3 2030 ahgr HLNDRR                |   -16428 |
+| USDHKD 21Aug PS RMDSSPRW                       |   -16045 |
+| Short LGENSO 5.5 34 ahgr NDHLRR                |   -16013 |
+| MTRC 2.88 2031 HKD NI HLNDRR                   |   -15750 |
+| CLZ6 Call RMDSSPRW                             |   -15508 |
+| XAU AH                                         |   -15410 |
+| HTSC 2027 6886 HK ahgr HLNDRR                  |   -15307 |
+| SGDMYR DanJH_60610                             |   -15224 |
+| CSSSHI 0.75 2031 cb 3877 HK ahgr HLNDRR        |   -15194 |
+| SGDX Syn 1m11m RMDSSPRW 21Jul CB               |   -14827 |
+| THOR 2y NDD RMDSSPRW                           |   -14204 |
+| NZD1s5s v USD1s5s Apr'25 VP                    |   -14141 |
+| EURAUD/CADAUD 1y CorrSwap V 2026 HC            |   -14065 |
+| SGDX syn 3m9m RMDSSPRW 9Jul CB                 |   -13439 |
+| SGDX Syn 1m11m RMDSSPRW 28Apr CB               |   -12399 |
+| CNH CCS v CNY NDIRS 5y HLRW                    |   -12261 |
+| INR 1s2s RMDSSPRW GOME                         |   -12167 |
+| SGDX Syn 6m1y RMDSSPRW-4Mar                    |   -11978 |
+| EURCNH 1m 7.65x7.55 PutSprd RR                 |   -11574 |
+| SGDX syn 3m9m RMDSSPRW 11Jul CB                |   -11568 |
+| SGDX Syn 6m6m RMDSSPRW 1oct CB                 |   -11509 |
+| USDINR 1mx12m RMDSSPRW                         |   -11487 |
+| KOOKMIN 06/27 CDS ahgr NDHLRR                  |   -11485 |
+| SGDX Syn 1y RMDSSPRW 9Sep CB                   |   -11348 |
+| SGDX Syn 1m11m RMDSSPRW 28Jul CB               |   -10622 |
+| SGDX Syn 1y RMDSSPRW 4Nov CB                   |   -10098 |
+| Long CGB 30y DanJH_60701                       |   -10095 |
+| SGDX Syn 1y RMDSSPRW 8oct CB                   |    -9289 |
+| USDCHF/USDSGD 1y CorrSwap V 2025 HC            |    -9115 |
+| Short srilan 3.6 38 so ndhlrr                  |    -9021 |
+| SGDX Syn 1m11m RMDSSPRW 30Apr CB               |    -8971 |
+| SGDX syn 6m1y RMDSSPRW-6Mar                    |    -8691 |
+| USDCNH 1M6.77/6.715PS YZ                       |    -8590 |
+| SGDX Syn 1y RMDSSPRW 23Oct CB                  |    -8312 |
+| SGDX Syn 3m9m RMDSSPRW 5Nov CB                 |    -8298 |
+| RAGB 0.85 2120 ph NDRR                         |    -8054 |
+| CNH Basis 202306 SKHC                          |    -8019 |
+| SGDX Syn 1y RMDSSPRW 13Oct CB                  |    -7977 |
+| SGDX Syn 1y RMDSSPRW 7Nov CB                   |    -7949 |
+| Short RILIN 52 ahgr NDHLRR                     |    -7925 |
+| SGDX Syn 1y RMDSSPRW 14Oct CB                  |    -7709 |
+| SGDX Syn 1y RMDSSPRW 7Aug CB                   |    -7658 |
+| SGDX Syn 1y RMDSSPRW 9Oct CB                   |    -7559 |
+| SGDX Syn 1m11m RMDSSPRW 21Apr CB               |    -7490 |
+| AUDNZD 3m 1.175P RMDSSPRW                      |    -7370 |
+| SGDX Syn 3m9m RMDSSPRW 17Jul CB                |    -7345 |
+| SGDX Syn 1y RMDSSPRW 16Oct CB                  |    -7337 |
+| SGDX Syn 1m11m RMDSSPRW 7May CB                |    -7313 |
+| ITRAXX XOVER 5y CDS NDHLRR1                    |    -7250 |
+| AUD 5y5y ASHC                                  |    -7173 |
+| MTRC 4 2056 HKD NI HLNDRR                      |    -7129 |
+| EURUSD 1Y1.15VOL YZ                            |    -7107 |
+| Trading Expenses                               |    -7090 |
+| SIGB vs KRW 10y RMDSSP                         |    -6923 |
+| CNH Basis 202303 SKHC                          |    -6771 |
+| SGDX Syn 1m11m RMDSSPRW 6May CB                |    -6770 |
+| EUR FXO 2w Csp AH                              |    -6736 |
+| HU ph HL                                       |    -6700 |
+| Sumibk 6.45 p-35 dp NDHLRR                     |    -6476 |
+| Jun/Aug26 RBA Pay SQWRMRR                      |    -6450 |
+| SGDX Syn 1y RMDSSPRW 4sep CB                   |    -6438 |
+| CHF FX AH                                      |    -6256 |
+| SGDX Syn 1y RMDSSPRW 10Oct CB                  |    -6127 |
+| SGDX Syn 1y RMDSSPRW 12Sep CB                  |    -6092 |
+| CNH Basis 202503 HC                            |    -5940 |
+| Short LGENSO 5.5 34 ahgr NDHLRR_1              |    -5906 |
+| AUD 10y vs JPY 30y RW2VPRMRR                   |    -5893 |
+| SGDX Syn 1y RMDSSPRW 26Nov CB                  |    -5890 |
+| NZD m26-1y RMDSSPRW                            |    -5749 |
+| SGDX Syn 1m11m RMDSSPRW 27Apr CB               |    -5687 |
+| Cogard 2.25 2034 HLNDRR                        |    -5665 |
+| RONXIN 8.1 23 abd RRHL                         |    -5610 |
+| SGDX Syn 1y RMDSSPRW 3Sep CB                   |    -5557 |
+| SGDX Syn 3m9m RMDSSPRW 19Aug CB                |    -5480 |
+| USDCNH/USDSGD 1y CorrSwap V 2026 HC            |    -5476 |
+| THB FX AH                                      |    -5408 |
+| SGDX Syn 3m9m RMDSSPRW 2Sep CB                 |    -5382 |
+| SUNAC 2026 cb 6.8 MCB 1 abd HLNDRR_N           |    -5356 |
+| SGDX Syn 3m rec RMDSSPRW                       |    -5279 |
+| SGDX Syn 3m9m RMDSSPRW 3Sep CB                 |    -5152 |
+| CAD FX AH                                      |    -5069 |
+| SRBI 6M DanJH_60410                            |    -5061 |
+| SGDX Syn 1m11m RMDSSPRW 29Apr CB               |    -5055 |
+| Short haohua 3 2030 ahgr HLNDRR_3              |    -4886 |
+| IRH7 RMDSSPRW GOME                             |    -4807 |
+| IDR FX AH                                      |    -4803 |
+| CNY 1s5s HLRW                                  |    -4681 |
+| SGDX Syn 6m1y RMDSSPRW-6Feb                    |    -4561 |
+| S4_SPX Put Spread 2026 RRRM                    |    -4554 |
+| Short YM RMDSSPRW                              |    -4181 |
+| USDINR RR                                      |    -4134 |
+| SGDX Syn 1y RMDSSPRW 3Dec CB                   |    -4103 |
+| Short JSTLIN 32 cbb NDHLRR_1                   |    -4059 |
+| ZJMGCL 2031 cbb 2899 HK HLNDRR                 |    -4046 |
+| HKINTL 2.7 2055 ahgr CNH HLNDRR                |    -4046 |
+| SGDX Syn 3m9m RMDSSPRW 24Mar CB                |    -4032 |
+| NAB Dec 2026 CDS NDHLRR                        |    -4006 |
+| NZD h26-1y VP                                  |    -3826 |
+| Long CL RM DS                                  |    -3780 |
+| TEMASE 3.1 2054 ahgr HLNDRR                    |    -3740 |
+| AGILE 6.050 2025 abd HLNDRR                    |    -3706 |
+| SGDX Syn 3m3m RMDSSPRW 23Apr CB                |    -3638 |
+| IRH7 RMDSSPRW                                  |    -3447 |
+| USDJPY RR JMS                                  |    -3432 |
+| THB 2y NDD RMDSSPRW                            |    -3328 |
+| AUDCNH FXO 12mV 4.95C AH                       |    -3156 |
+| USDINR 1mx12m RR                               |    -3114 |
+| SGDX Syn 1y RMDSSPRW 5Sep CB                   |    -3011 |
+| SGDX Syn 1y RMDSSPRW 25Nov CB                  |    -2976 |
+| SRBI 12M RMDSSPRW                              |    -2969 |
+| JPY u26-15y Pay RMDSSPRW                       |    -2870 |
+| TEMASE 3.1 2054 ahgr HLNDRR_3                  |    -2859 |
+| SGDX Syn 3m3m RMDSSPRW 28Apr CB                |    -2840 |
+| NZD h26-2y rec RR                              |    -2805 |
+| SGDX Syn 1m11m RMDSSPRW 13May CB               |    -2790 |
+| Nwdevl 4.5 2030 cp RR                          |    -2730 |
+| EURJPY 1y 160 DigiP 190 KO RR                  |    -2709 |
+| IRZ5M6 Fltnr RMDSSPRW                          |    -2640 |
+| RONXIN 8.95 23 abd RRHL                        |    -2635 |
+| INR 1s5s 2026 RMDSPSPRW GOME                   |    -2591 |
+| USDHKD 3M PS RMDSSPRW                          |    -2558 |
+| LOGPH 5.25 2025 abd RRHL                       |    -2420 |
+| XAUUSD 1m 4500x4700 CallSprd RR                |    -2393 |
+| Long EURUSD 2026 SQWRMRR                       |    -2294 |
+| HKINTL 2.6 2045 ahgr CNH HLNDRR                |    -2231 |
+| SGDX Syn 1m11m RMDSSPRW 15May CB               |    -2201 |
+| EUR FXO 4mV Long AH                            |    -2186 |
+| EURUSD LONGRISKREV UB                          |    -2006 |
+| NQU6P 23000 Put RR                             |    -2000 |
+| Long KE 2026 RMDSSPRW                          |    -1926 |
+| Sinoce 3 2033 cp HLNDRR                        |    -1917 |
+| HKINTL 3.15 2054 CNH NI HLNDRR                 |    -1872 |
+| XAUUSD SQW                                     |    -1861 |
+| Short ITRX FIN SUB 5y CDS NDHLRR               |    -1701 |
+| ILFSin 2021 RRRM                               |    -1698 |
+| EURAUD FXO 3m DigKO AH                         |    -1694 |
+| NZD vs USD 1s5s RW2VPRMRR                      |    -1679 |
+| SGD 6m6m pts RMDSSPRW                          |    -1579 |
+| Short VG ND                                    |    -1550 |
+| CNY 2y NDD RMDSSP                              |    -1536 |
+| TWD FXO Calender 18m-9m AH                     |    -1468 |
+| TWD 1y1y v 2y1y Stpnr RMDSSPRW                 |    -1450 |
+| SGDX Syn 1m11m RMDSSPRW 27May                  |    -1390 |
+| AUDJPY1M100digiCall SP1                        |    -1275 |
+| Rec AUD 10y YQ RRRM                            |    -1275 |
+| Pay AUD 10y YQ RRRM                            |    -1257 |
+| AUDUSD 3m 0.76 DigiC SP1                       |    -1248 |
+| Agile 5.75 2025 abd HLNDRR                     |    -1225 |
+| Long XM TL                                     |    -1220 |
+| AUDUSD LNG AS                                  |    -1220 |
+| LOGPH 5.25 2025 abd ND                         |    -1210 |
+| Short VG HL ph                                 |    -1209 |
+| EURJPY FX AH                                   |    -1195 |
+| JPY z26-2y 1.8x2.25 Spd RMDSSPRW               |    -1183 |
+| RONXIN 8.1 23 abd ND                           |    -1019 |
+| Agile 5.75 2025 abd RR                         |     -980 |
+| USDCHF 6m 0.7840P V 2026 SQWHC                 |     -918 |
+| China 2.375 2029 EUR SO HLNDRR                 |     -797 |
+| JPY 55/105/155 W RMDSSPRW                      |     -797 |
+| USDSGD 6M2YCalsprd AHYZ                        |     -789 |
+| Risk Parity YQ RRRM                            |     -774 |
+| USDCNH 3m 6.81x6.88 CallSprd RRSQW             |     -765 |
+| Pay NZD 10y YQ RRRM                            |     -741 |
+| AUDNZD FXO 2m DualDNT AH                       |     -733 |
+| INTNED 3.875 p-27 ferct ndhlrr                 |     -723 |
+| SGD 1s10s RMDSSPRW                             |     -709 |
+| IRH7U7 fltnr RMDSSPRW GOME                     |     -701 |
+| IRU6 RMDSSPRW GOME                             |     -653 |
+| SGDX Syn 1m11m RMDSSPRW-11Apr                  |     -643 |
+| GBPAUD DOWNSIDE DIGIT SWRR                     |     -612 |
+| SGDCNH/SGDJPY DecIMM DualDigi SKHC             |     -590 |
+| HKD FXO 1y Fly AH                              |     -585 |
+| MYR 2y NDD RMDS MPO                            |     -573 |
+| PWRLNG 4 2023 abd RRHL                         |     -530 |
+| NZD h27-1y RMDSSPRW                            |     -512 |
+| JP10y BE InfP RMDS                             |     -501 |
+| ADHERH 8.5 2029 abd HLNDRR_2                   |     -486 |
+| Short Itraxx Japan 5y CDS NDHLRR               |     -474 |
+| USDSGD LONGVOL RMUB                            |     -472 |
+| MTRC 3.05 2054 CNH ahgr HLNDRR                 |     -466 |
+| NZD 2y YQ RRRM                                 |     -450 |
+| Long KTB 10y futs RMDSRR                       |     -442 |
+| HRINTH 4.25 2027 cbocs HLNDRR_2                |     -441 |
+| AUD 10y vs JPY 30y VP                          |     -440 |
+| ITRX EURO MAIN S43 NOV PS 60/75 ph NDHLRR      |     -437 |
+| USDJPY 1y 125 DigiP RR                         |     -424 |
+| MYR 5y NDD RMDS                                |     -418 |
+| JBI23 BEI RMDSSPRW 12Aug                       |     -416 |
+| THB NDD 5y IRS                                 |     -403 |
+| AUDUSD JF                                      |     -387 |
+| Long HSTECH ND                                 |     -370 |
+| SGDX Syn 6m RMDSSPRW 3Sep CB                   |     -368 |
+| RVFX Basket YZ                                 |     -357 |
+| Shimao 5 2031 abd HLNDRR                       |     -355 |
+| ZHHFGR 6 PERP CNH dp HLNDRR                    |     -354 |
+| AUDNZD 7W 1.095C 1.1150RKO SP1 RVF             |     -331 |
+| CNH Basis 202409 HC                            |     -313 |
+| CNH Basis 202603 HC                            |     -312 |
+| Mar26 BoJ RMDSSPRW                             |     -296 |
+| JBI23 BEI RMDSSPRW 4Aug                        |     -295 |
+| Long NK RMDSSPRW                               |     -291 |
+| SORA 1y DanJH_60204                            |     -273 |
+| ZHHFGR 6 PERP CNH dp HLNDRR_3                  |     -273 |
+| SGDX Syn 1m rec RMDSSPRW                       |     -268 |
+| SGD Basket YZ                                  |     -267 |
+| RBA May25 Pay AHHC                             |     -265 |
+| JBI23 BEI RMDSSPRW                             |     -257 |
+| BOJ Jun25 Paid AH                              |     -252 |
+| USDMYR RR AFA                                  |     -221 |
+| JPY h26-20y 2.1 Rcver RMDSSPRW                 |     -216 |
+| SUNAC 2 2028 mcb abd HLNDRR_2                  |     -212 |
+| PWRLNG 4 2023 abd ND                           |     -203 |
+| Hsbc 6 p-27 ferct RR                           |     -200 |
+| AUDNZD 2mx1y VolSpread AHYZHC                  |     -180 |
+| NESNVX 2.8 2035 cnh ahgr HLNDRR                |     -176 |
+| EURUSD 6m 1.1575P V 2026 HC                    |     -175 |
+| EURJPY RR JPT                                  |     -152 |
+| USDMYR AFA RR                                  |     -149 |
+| Korgas Sep 2015                                |     -147 |
+| CNH Basis 202209 SKHC                          |     -143 |
+| Thaigb 2036 RMDSTL                             |     -131 |
+| EURUSD14Dec1.1950DKO1.1388/1.2588 RRRD         |     -131 |
+| LDK Solar 2014 CBD                             |     -129 |
+| SGDX Syn 1m11m RMDSSPRW 12May CB               |     -121 |
+| SUNAC 2 2028 mcb abd HLNDRR                    |     -120 |
+| CNH Basis 202312 SKHC                          |     -115 |
+| JBI24 BEI RMDSSPRW                             |     -113 |
+| EURUSD 3m 1.1730C V 2026 HC                    |     -106 |
+| CHFOTN 2031 0 abd HLNDRR                       |     -105 |
+| JGB 2055 ASW RRDS                              |     -103 |
+| YANRIV_LOGPH abd HLNDRR                        |     -100 |
+| HKD 2y v USD2s20s VP                           |     -100 |
+| Lloyds Oct 2014                                |      -92 |
+| AIA 2.88 2036 CNH cab HLNDRR                   |      -89 |
+| USDTWD 3m1y pts SQWRMRR                        |      -87 |
+| FULIN IN TRS RR                                |      -87 |
+| NKY 09/12/25 P40500 RMDSSPRW                   |      -84 |
+| NZD FXO 6m RiskRev AH                          |      -82 |
+| Shimao 2026 mcb abd HLNDRR                     |      -81 |
+| JPY May26-15y 2.0 Rcver RR                     |      -78 |
+| JGB IVSP Long RMDS                             |      -76 |
+| USDPHP 1y 63C AHHC                             |      -74 |
+| NZDSGD 3m 0.7275x0.74x0.7525 CallFly V 2026 HC |      -72 |
+| SGDX Syn 3m3m RMDSSPRW 7Nov CB                 |      -71 |
+| EURUSD 6m 1.21 Call 1.27 RKO RRSQW             |      -70 |
+| Logph 7.5 2022 RVINT                           |      -67 |
+| MTRC 3.05 2054 NI HLNDRR                       |      -65 |
+| ADHERH 9.8 2031 abd HLNDRR_2                   |      -63 |
+| RBNZ Aug Rec TL                                |      -63 |
+| BoJ Jan-26 Pay RMDSSPRW                        |      -62 |
+| Long SFIZ6 RMDSSPRW                            |      -54 |
+| CNH Basis 202309 HK SKHC                       |      -54 |
+| XAUDNT25MAR 1790/1940 AS                       |      -50 |
+| USDTHB RR AFA                                  |      -50 |
+| AUDAccum                                       |      -49 |
+| VG ph HL                                       |      -48 |
+| USDMYR MPO CN                                  |      -47 |
+| BOJ Jul25 Pay YZHC                             |      -47 |
+| EURSGD/EURUSD 1y Correl SKRM                   |      -46 |
+| HK-US 1y1y rec                                 |      -46 |
+| SGDX Syn 1m5m RMDSSPRW 9oct CB                 |      -45 |
+| JINMAO 817 HK cp HLNDRR                        |      -44 |
+| USDSGD 6m 1.2670C V 2026 SQWHC                 |      -42 |
+| HKD 2y VP                                      |      -41 |
+| Long JGB Futs RMRR                             |      -39 |
+| AUDNZD 1.2 v 1.25 CS RMDSSPRW                  |      -36 |
+| SUNAC 1 2032 cb abd HLNDRR_2                   |      -35 |
+| Jul25 BoJ RMDSSPRW                             |      -35 |
+| Short SGD Basket DanJH_50106                   |      -30 |
+| Long JGB Futs RMDSRR                           |      -30 |
+| Road King 2014                                 |      -30 |
+| EURCHF 3M0.912/0.9PS YZ                        |      -29 |
+| Reclin 3.875 27 ferct ndhlrr                   |      -29 |
+| JP 2029 BE RMDS                                |      -24 |
+| KINSF 2025 cb ahgr HLNDRR                      |      -24 |
+| CNH Basis 202406-2 SKHC                        |      -21 |
+| SFIZ6 96 x 96.5 CS RMDSSPRW                    |      -20 |
+| JU13 LNG AS                                    |      -17 |
+| USDKRW 6m 1400 DigiP 1m 1502 WKI SQWRMRR       |      -17 |
+| HCX4P 7300 HL                                  |      -14 |
+| CCAMCL 2.58 2028 ahgr CNH HLNDRR               |      -13 |
+| HKD 6m Rec RMDSSPRW                            |      -13 |
+| CNY NDIRS 1y Recd PL                           |      -13 |
+| May 26 RBA Rec SQWRMRR                         |      -13 |
+| Long JGB Futs DS                               |      -13 |
+| Long ERM6 RMDSSPRW                             |      -12 |
+| JPYKRW UB                                      |      -12 |
+| SGD Basket SK                                  |      -11 |
+| HIBOR 5y DanJH_60225                           |      -11 |
+| TWD FXO 1m Dig PutSp AH                        |      -11 |
+| Long ERZ6 RMDSSPRW                             |      -10 |
+| USDCNH LONGVOL UB                              |       -8 |
+| Long HSCEI RR                                  |       -8 |
+| SGDX Syn 1m11m RMDSSPRW-20May                  |       -6 |
+| FRESHK 4.25 2028 cnh ahgr HLNDRR               |       -6 |
+| UOBSP SGD 3 p-33 cab NDHLRR                    |       -5 |
+| THB Basket JH                                  |       -5 |
+| Short EURUSD 2026 SQWRMRR                      |       -4 |
+| NKY 12 PS 21.5/20.5 RRDS                       |       -4 |
+| SGDX Syn 6m6m RMDSSPRW 23Jan                   |       -4 |
+| SGDX Syn 6m6m RMDSSPRW 28jan                   |       -4 |
+| SGDX Syn 6m RMDSSPRW 25Jul CB                  |       -4 |
+| Short ERU6 RMDSSPRW                            |       -4 |
+| USDJPY DI                                      |       -4 |
+| NZGBI 2025 RMDSSP                              |       -4 |
+| CAPG 3883 abd HLNDRR_2                         |       -3 |
+| Hkd 3y rec RM                                  |       -3 |
+| YMXM Stpnr RMDSSPRW                            |       -3 |
+| Long KE Futs DAN_50408                         |       -3 |
+| HKD FX AH                                      |       -3 |
+| QNTPF 2027 cb 2228 HK ahgr HLNDRR              |       -3 |
+| Long YM Futs Dan_50708                         |       -3 |
+| IRZ5H6 Fltn DAN_50110                          |       -2 |
+| HCX4P 7000 ND                                  |       -2 |
+| Long YM RMDS 7-3                               |       -2 |
+| HK 6m13 v 2y14 rmds                            |       -2 |
+| Long KE Futs DAN_40829                         |       -2 |
+| AUDUSD YZ                                      |       -2 |
+| BOCGRI 2.02 2031 CNH NI HLNDRR                 |       -2 |
+| NZDUSD3m0.6300CS0.65RKI0.6675 RRRD             |       -2 |
+| SX5E Jun24 4000P RR                            |       -2 |
+| SGDX Syn 6m6m RMDSSPRW-24Oct                   |       -2 |
+| Short IRH6 RMDSSPRW                            |       -2 |
+| SGDX Syn 1y RMDSSPRW 19Aug                     |       -2 |
+| SGD Basket RR                                  |       -2 |
+| EURUSD 1m 1.14/15 CallSprd SK                  |       -1 |
+| SGD 1y Rec RMDSSPRW 26Jun                      |       -1 |
+| SGD 1y RMDSSPRW                                |       -1 |
+| AUD m30-5y Rec DAN_50515                       |       -1 |
+| USDTHB RR                                      |       -1 |
+| SG vs US h6-1y DanJH_50408                     |       -1 |
+| SGDX Syn 2m10m RMDSSPRW 4sep                   |       -1 |
+| SG vs US h6-1y DanJH_50327                     |       -1 |
+| Long HSCEI vs short A50 HL                     |       -1 |
+| SGDX Syn 2m10m RMDSSPRW 5sep                   |       -1 |
+| Long KE Futs Dan_50326                         |       -1 |
+| SG vs US 1y1y DanJH_41204                      |       -1 |
+| Short HSI TL                                   |       -1 |
+2026-09-09 18:14:04,311 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-09 18:14:15,450 [INFO] mongodb-query-api - Request processed in 95.43 seconds.

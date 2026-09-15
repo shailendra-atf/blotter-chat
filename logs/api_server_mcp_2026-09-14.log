@@ -1,0 +1,141 @@
+2026-09-14 21:46:58,459 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:01,318 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:47:01,332 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:47:15,138 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:15,179 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:15,197 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:15,253 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:15,259 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:18,859 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:47:18,873 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:47:18,876 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:47:18,887 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:47:18,921 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:47:18,940 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:47:18,968 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:47:19,001 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:47:19,094 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:47:19,108 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:47:58,581 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,589 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,597 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,590 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,657 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,609 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,610 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,739 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,771 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,677 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,841 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,665 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,916 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,949 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,608 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,952 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:58,900 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:59,000 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:59,059 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:47:59,116 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 21:48:17,929 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:18,293 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:18,401 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:18,416 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:18,536 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:18,707 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:18,866 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:19,196 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:19,358 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:19,647 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:20,419 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:20,653 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:22,553 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:22,863 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:23,340 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:23,707 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:23,881 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:24,163 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:24,994 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:25,393 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:25,520 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:25,822 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:28,140 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:28,183 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:28,228 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:28,328 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:28,368 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:28,345 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:29,156 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:29,194 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:29,473 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:29,477 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:29,504 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:29,525 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:29,628 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:29,671 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:29,808 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:29,874 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 21:48:30,287 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 21:48:30,512 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 22:32:08,151 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:32:41,991 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:38:31,715 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:39:12,477 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:41:49,936 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:46:16,137 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:46:37,014 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:47:19,863 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:50:32,054 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:50:43,383 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:51:02,400 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:52:12,107 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:52:14,132 [INFO] mongodb-query-api - Initializing Async Motor MongoDB Client...
+2026-09-14 22:52:14,343 [INFO] mongodb-query-api - Initialized Motor Client for database: 'ValuationSummary04June'
+2026-09-14 22:52:14,758 [INFO] mongodb-query-api - Pinged MongoDB cluster asynchronously. Connection verified.
+2026-09-14 22:52:14,759 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-14 22:52:14,957 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-14 22:52:18,016 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-14 22:52:18,241 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-14 22:52:18,801 [INFO] mongodb-query-api - Validating and executing async aggregation pipeline on PnLCOB collection.
+2026-09-14 22:52:22,681 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 22:52:22,693 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 22:54:18,445 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:54:20,150 [INFO] mongodb-query-api - Initializing Async Motor MongoDB Client...
+2026-09-14 22:54:20,159 [INFO] mongodb-query-api - Initialized Motor Client for database: 'ValuationSummary04June'
+2026-09-14 22:54:20,572 [INFO] mongodb-query-api - Pinged MongoDB cluster asynchronously. Connection verified.
+2026-09-14 22:54:21,346 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 22:54:21,353 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
+2026-09-14 22:55:12,796 [INFO] botocore.credentials - Found credentials in environment variables.
+2026-09-14 22:55:14,496 [INFO] mongodb-query-api - Initializing Async Motor MongoDB Client...
+2026-09-14 22:55:14,505 [INFO] mongodb-query-api - Initialized Motor Client for database: 'ValuationSummary04June'
+2026-09-14 22:55:14,951 [INFO] mongodb-query-api - Pinged MongoDB cluster asynchronously. Connection verified.
+2026-09-14 22:55:16,033 [INFO] mongodb-query-api - 
+--- [Hop 0] Supervisor Evaluating Graph State ---
+2026-09-14 22:55:16,045 [INFO] langchain_aws.chat_models.bedrock_converse - Using Bedrock Converse API to generate response
