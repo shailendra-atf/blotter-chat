@@ -1,20 +1,31 @@
-import json
-import operator
 from typing import List, Optional, Dict, Any, Annotated, TypedDict
 from operator import add
 from pydantic import BaseModel, Field, field_validator
-import operator 
+from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
+
+
 class AgentState(TypedDict):
-    messages: str
-    retrieved_docs: List[str]
-    # Reducers using operator.add to safely accumulate parallel outputs
+    messages: Annotated[List[BaseMessage], add_messages]
+    retrieved_docs: List[Dict[str, Any]]
     mongodb_queries: Annotated[List[str], add]
     query_results: Annotated[List[Dict[str, Any]], add]
     final_response: str
 
+
+def make_initial_agent_state(messages: List[BaseMessage]) -> AgentState:
+    return {
+        "messages": messages,
+        "retrieved_docs": [],
+        "mongodb_queries": [],
+        "query_results": [],
+        "final_response": "",
+    }
+
+
 class TaskState(TypedDict):
-    doc: dict
-    messages: str
+    doc: Dict[str, Any]
+    user_intent: str
 
 class execute_read_queryOutput(BaseModel):
     # Change from: result: str

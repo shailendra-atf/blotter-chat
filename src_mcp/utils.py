@@ -143,11 +143,11 @@ def initialize_llm_client():
                 region_name=os.getenv("AWS_DEFAULT_REGION"),
                 temperature=0.0,
                 max_tokens=8192,
-                disable_streaming=False,
-                additional_model_request_fields={
-                    "top_k":1,
-                    "top_p":1,
-                }
+                # disable_streaming=False,
+                # additional_model_request_fields={
+                #     "top_k":1,
+                #     "top_p":1,
+                # }
             )
             logger.info("Successfully initialized ChatBedrockConverse client.")
         except ClientError as e:

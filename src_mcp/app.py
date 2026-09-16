@@ -2,26 +2,25 @@ import os
 import json
 import time
 import uuid
-import boto3
-import asyncio
+from contextlib import asynccontextmanager
 from typing import Optional
-from fastapi import FastAPI, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import StreamingResponse
-from dotenv import load_dotenv
+
+import boto3
 import motor.motor_asyncio
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from langchain_core.messages import ToolMessage
 from botocore.config import Config
-from langchain_aws import ChatBedrockConverse
-from botocore.exceptions import ClientError, BotoCoreError
+from botocore.exceptions import BotoCoreError, ClientError
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from src_mcp.models import AgentState, TaskState
+from langchain_aws import ChatBedrockConverse
+
 from src_mcp.config import *
-from src_mcp.models import *
 from src_mcp.dependencies import logger
-# from agents import startup_agent, execute_mongo_query
+from src_mcp.models import *
 from src_mcp.orchestrator import build_orchestrator
 
 load_dotenv(override=True)
@@ -52,7 +51,15 @@ def openwebui_status(description: str, done: bool = False):
 # -------------------------------------------------------------------
 # 6. FastAPI Application Initialization & Route Handling
 # -------------------------------------------------------------------
-app = FastAPI(title="MongoDB Dynamic Query Engine (Async OpenAI Endpoint)")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initializing reusable graph resources")
+    app.state.graph = await build_orchestrator()
+    yield
+    app.state.graph = None
+
+
+app = FastAPI(title="MongoDB Dynamic Query Engine (Async OpenAI Endpoint)", lifespan=lifespan)
 
 # NOTE: allow_credentials=True cannot be safely combined with a wildcard
 # origin (browsers reject it). Restrict allow_origins to real values if
@@ -274,8 +281,25 @@ async def ollama_ps_stub():
 @app.post("/api/chat", response_model=ChatCompletionResponse, dependencies=[Depends(verify_api_key)])
 @app.post("/v1/api/chat", response_model=ChatCompletionResponse, dependencies=[Depends(verify_api_key)])
 @app.post("/v1/chat/completions", response_model=ChatCompletionResponse, dependencies=[Depends(verify_api_key)])
-async def chat_completions(request: ChatCompletionRequest):
+async def chat_completions(request: ChatCompletionRequest, http_request: Request):
     """OpenAI API v1 compatible POST route for completions (Fully Async)."""
+
+    if not request.messages:
+        logger.warning("Empty messages array provided in request payload.")
+        final_text = "The request parameter 'messages' must contain at least one item."
+        return ChatCompletionResponse(
+            id=f"chatcmpl-{uuid.uuid4()}",
+            created=int(time.time()),
+            model=request.model or MODEL_ID,
+            choices=[
+                Choice(
+                    index=0,
+                    message=ChoiceMessage(role="assistant", content=final_text),
+                    finish_reason="stop",
+                )
+            ],
+            usage=UsageInfo(),
+        )
 
     # Intercept Open WebUI Title Generation prompts
     if "Generate a concise title summarizing the chat history" in request.messages[-1].content:
@@ -296,24 +320,7 @@ async def chat_completions(request: ChatCompletionRequest):
             usage=UsageInfo(),
         )
 
-    if not request.messages:
-        logger.warning("Empty messages array provided in request payload.")
-        final_text = "The request parameter 'messages' must contain at least one item."
-        return ChatCompletionResponse(
-            id=f"chatcmpl-{uuid.uuid4()}",
-            created=int(time.time()),
-            model=request.model,
-            choices=[
-                Choice(
-                    index=0,
-                    message=ChoiceMessage(role="assistant", content=final_text),
-                    finish_reason="stop",
-                )
-            ],
-            usage=UsageInfo(),
-        )
-
-    # user_prompt = None
+    user_prompt = ""
     formatted_messages = []
     for msg in request.messages[-CONTEXT_MESSAGES_TO_CONSIDER:]:
         if msg.role == "user":
@@ -374,28 +381,58 @@ async def chat_completions(request: ChatCompletionRequest):
     #     *formatted_messages
     # ]
     
-    # Check if client requested a streamed response
-    is_stream = getattr(request, "stream", False)
-    # is_stream = False
-    graph = await build_orchestrator()
+    # Honor the client's requested response mode.
+    is_stream = request.stream is False
+    graph = getattr(http_request.app.state, "graph", None)
+    if graph is None:
+        graph = await build_orchestrator()
+        http_request.app.state.graph = graph
 
-    # -------------------------------------------------------------------
-    # STREAMING RESPONSE BRANCH
-    # -------------------------------------------------------------------
     try:
       if is_stream:
-        # ----------------------------------------
-        # ANALYZING
-        # ----------------------------------------
         async def event_generator():
             cmpl_id = f"chatcmpl-{uuid.uuid4()}"
             created_time = int(time.time())
+            final_response = ""
 
             try:
+                def status_chunk(description: str, done: bool = False) -> str:
+                    return f"data: {json.dumps({
+                        'id': cmpl_id,
+                        'object': 'chat.completion.chunk',
+                        'created': created_time,
+                        'model': request.model or MODEL_ID,
+                        'choices': [{
+                            'index': 0,
+                            'delta': {'role': 'assistant', 'content': ''},
+                            'finish_reason': None
+                        }],
+                        'status': {'description': description, 'done': done}
+                    })}\n\n"
 
-                # ----------------------------------------
-                # ANALYZING
-                # ----------------------------------------
+                yield status_chunk("Analyzing your request...")
+
+                initial_state = make_initial_agent_state(formatted_messages)
+
+                async for update in graph.astream(initial_state, stream_mode="updates"):
+                    for node_name, payload in update.items():
+                        if isinstance(payload, dict):
+                            final_response = payload.get("final_response", final_response)
+
+                        if node_name == "rag_worker":
+                            status = "📚 Finding relevant data sources..."
+                        elif node_name == "generate_mongodb_query_node":
+                            status = "🔧 Generating MongoDB query..."
+                        elif node_name == "execute_mongodb_query_node":
+                            status = "⚡ Executing MongoDB query..."
+                        elif node_name == "format_response_node":
+                            status = "📊 Preparing results..."
+                        else:
+                            status = f"🔄 Updating {node_name}..."
+
+                        yield status_chunk(status)
+
+                final_response = final_response or "No matching records found in the database for the given criteria."
                 yield f"data: {json.dumps({
                     'id': cmpl_id,
                     'object': 'chat.completion.chunk',
@@ -403,220 +440,50 @@ async def chat_completions(request: ChatCompletionRequest):
                     'model': request.model or MODEL_ID,
                     'choices': [{
                         'index': 0,
-                        'delta': {
-                            'content': '🔍 Analyzing your request...'
-                        },
-                        'finish_reason': None
-                    }]
+                        'delta': {'content': final_response},
+                        'finish_reason': 'stop'
+                    }],
+                    'status': {'description': 'Final answer ready', 'done': True}
                 })}\n\n"
-
-                async for event in graph.astream_events(
-                    {"messages": formatted_messages},
-                    version="v2"
-                ):
-
-                    kind = event["event"]
-                    event_name = event.get("name", "")
-
-                    # ----------------------------------------
-                    # TOOL START
-                    # ----------------------------------------
-                    if kind == "on_tool_start":
-                        if event_name == "generate_query":
-                            status = "🔧 Generating MongoDB query..."
-
-                        elif event_name == "execute_mongo_query":
-                            status = "🗄️ Executing MongoDB query..."
-
-                        elif event_name == "plot_graph":
-                            status = "📊 Generating visualization..."
-
-                        else:
-                            status = f"🔧 Running {event_name}..."
-
-                        chunk_data = {
-                            "id": cmpl_id,
-                            "object": "chat.completion.chunk",
-                            "created": created_time,
-                            "model": request.model or MODEL_ID,
-                            "choices": [{
-                                "index": 0,
-                                "delta": {
-                                    "content": f"\n\n{status}\n\n"
-                                },
-                                "finish_reason": None
-                            }]
-                        }
-
-                        yield f"data: {json.dumps(chunk_data)}\n\n"
-
-
-                    # ----------------------------------------
-                    # TOOL END
-                    # ----------------------------------------
-                    elif kind == "on_tool_end":
-
-                        if event_name == "generate_query":
-                            status = "✅ MongoDB query generated"
-
-                        elif event_name == "execute_mongo_query":
-                            status = "✅ MongoDB query completed"
-
-                        elif event_name == "plot_graph":
-                            status = "✅ Visualization generated"
-
-                        else:
-                            status = f"✅ {event_name} completed"
-
-                        chunk_data = {
-                            "id": cmpl_id,
-                            "object": "chat.completion.chunk",
-                            "created": created_time,
-                            "model": request.model or MODEL_ID,
-                            "choices": [{
-                                "index": 0,
-                                "delta": {
-                                    "content": f"{status}\n\n"
-                                },
-                                "finish_reason": None
-                            }]
-                        }
-
-                        yield f"data: {json.dumps(chunk_data)}\n\n"
-
-                    # ----------------------------------------
-                    # MODEL STREAM
-                    # ----------------------------------------
-                    elif kind == "on_chat_model_stream":
-
-                        chunk = event["data"]["chunk"]
-
-                        content = getattr(chunk, "content", "")
-
-                        if isinstance(content, list):
-                            text_chunks = [
-                                block["text"]
-                                for block in content
-                                if isinstance(block, dict)
-                                and block.get("type") == "text"
-                            ]
-
-                            content = "".join(text_chunks)
-
-                        if content:
-                            chunk_data = {
-                                "id": cmpl_id,
-                                "object": "chat.completion.chunk",
-                                "created": created_time,
-                                "model": request.model or MODEL_ID,
-                                "choices": [{
-                                    "index": 0,
-                                    "delta": {
-                                        "content": content
-                                    },
-                                    "finish_reason": None
-                                }]
-                            }
-
-                            yield f"data: {json.dumps(chunk_data)}\n\n"
-
-
-                # # ----------------------------------------
-                # # FINAL
-                # # ----------------------------------------
-                # final_chunk = {
-                #     "id": cmpl_id,
-                #     "object": "chat.completion.chunk",
-                #     "created": created_time,
-                #     "model": request.model or MODEL_ID,
-                #     "choices": [{
-                #         "index": 0,
-                #         "delta": {
-                #             "content": "\n\n✅ Done"
-                #         },
-                #         "finish_reason": "stop"
-                #     }]
-                # }
-
-                # yield f"data: {json.dumps(final_chunk)}\n\n"
-                # yield "data: [DONE]\n\n"
-
-
-            except Exception as e:
-
-                logger.error(
-                    f"Streaming error: {str(e)}",
-                    exc_info=True
-                )
-
-                err_data = {
-                    "id": cmpl_id,
-                    "object": "chat.completion.chunk",
-                    "created": created_time,
-                    "model": request.model or MODEL_ID,
-                    "choices": [{
-                        "index": 0,
-                        "delta": {
-                            "content": f"\n\n❌ Error: {str(e)}"
-                        },
-                        "finish_reason": "stop"
-                    }]
-                }
-
-                yield f"data: {json.dumps(err_data)}\n\n"
                 yield "data: [DONE]\n\n"
+            except Exception as exc:
+                logger.error(f"Streaming error: {exc}", exc_info=True)
+                yield f"data: {json.dumps({
+                    'id': cmpl_id,
+                    'object': 'chat.completion.chunk',
+                    'created': created_time,
+                    'model': request.model or MODEL_ID,
+                    'choices': [{
+                        'index': 0,
+                        'delta': {'content': 'I could not process that request right now.'},
+                        'finish_reason': 'stop'
+                    }],
+                    'status': {'description': 'Request failed', 'done': True}
+                })}\n\n"
+                yield "data: [DONE]\n\n"
+
         return StreamingResponse(event_generator(), media_type="text/event-stream")
       else:
-        # results = await agent.ainvoke({"messages": formatted_messages})
         logger.info(f"{formatted_messages=}")
-        initial_state = {
-            "messages": formatted_messages,
-            "retrieved_docs": [],
-            "mongodb_queries": [],
-            "query_results": [],
-            "final_response": ""
-        }
+        initial_state = make_initial_agent_state(formatted_messages)
         final_state = await graph.ainvoke(initial_state)
-        logger.info(f"{final_state=}")
-        # logger.info(f"{final_state["messages"]=}")
+        # logger.info(f"final_text={final_state}")
+        final_text = final_state.get("final_response") or "No matching records found in the database for the given criteria."
+        logger.info(f"final_text={final_text}")
+        # for msg in reversed(final_state["messages"][-CONTEXT_MESSAGES_TO_CONSIDER:]):
+        #     # Capture Assistant Text
+        #     if isinstance(msg, AIMessage) and not llm_analysis:
+        #         if isinstance(msg.content, list):
+        #             llm_analysis = "\n".join(
+        #                 b["text"].strip()
+        #                 for b in msg.content
+        #                 if isinstance(b, dict) and b.get("type") == "text" and b.get("text", "").strip()
+        #             ) or None
 
-        # Extract messages from agent output
-        tool_output = None
-        llm_analysis = None
-        for msg in reversed(final_state["messages"][-CONTEXT_MESSAGES_TO_CONSIDER:]):
-            # Capture Tool Output
-            if isinstance(msg, ToolMessage) and not tool_output:
-                tool_output = msg.content
-                # print(f"\n\nTool Output: {tool_output}\n\n")
-                
-            # Capture Assistant Text
-            elif isinstance(msg, AIMessage) and not llm_analysis:
-                if isinstance(msg.content, list):
-                    llm_analysis = "\n".join(
-                        b["text"].strip()
-                        for b in msg.content
-                        if isinstance(b, dict) and b.get("type") == "text" and b.get("text", "").strip()
-                    ) or None
-
-                elif isinstance(msg.content, str):
-                    llm_analysis = msg.content
-
-        # Assemble output text
-        if tool_output and 'There are too many results. Please refine your query' in tool_output:
-            final_text = tool_output
-        elif tool_output and llm_analysis:
-            final_text = f"{tool_output}\n\n{llm_analysis}"
-        elif tool_output:
-            final_text = tool_output
-        elif llm_analysis:
-            final_text = llm_analysis
-        else:
-            final_text = "No matching records found in the database for the given criteria."
-        # Final sanity check: never allow the raw MODEL_ID to escape to the user
-        if final_text.strip() == MODEL_ID or final_text.strip().startswith("anthropic."):
-            final_text = "No matching records found in the database for the given criteria."
-        final_text = json.dumps(final_state["query_results"])
-        logger.info(f"{final_text=}")
+        #         elif isinstance(msg.content, str):
+        #             llm_analysis = msg.content
+        # final_text = f"{final_text}\n\n{llm_analysis}"
+        # logger.info(f"{final_text=}")
         end_time = time.time()
         logger.info(f"Request processed in {end_time - start_time:.2f} seconds.")
         return ChatCompletionResponse(

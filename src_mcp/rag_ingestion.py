@@ -1,6 +1,6 @@
 import chromadb
 from src_mcp.config import COLLECTION1, COLLECTION2, COLLECTION3, COLLECTION4, DB_NAME1
-from src_mcp.context import CONTEXT, SCHEMA2, SCHEMA3, SCHEMA4
+from src_mcp.context import SCHEMA1, SCHEMA2, SCHEMA3, SCHEMA4
 from src_mcp.dependencies import logger
 
 # Initialize Local Vector Database containing all metadata descriptions
@@ -24,10 +24,10 @@ def initialize_chromadb():
                 # "Contains AUM in million USD about the Fund",
             ],
             metadatas=[
-                {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION1, "schema": CONTEXT},
-                # {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION2, "schema": SCHEMA2},
-                {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION3, "schema": SCHEMA3},
-                # {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION4, "schema": SCHEMA4},
+                {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION1, "schema": SCHEMA1.format(COLLECTION1=COLLECTION1)},
+                # {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION2, "schema": SCHEMA2.format(COLLECTION2=COLLECTION2)},
+                {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION3, "schema": SCHEMA3.format(COLLECTION3=COLLECTION3)},
+                # {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION4, "schema": SCHEMA4.format(COLLECTIO4=COLLECTION4)},
             ],
             ids=["id_mongo_1", "id_mongo_2"]#, "id_mongo_3", "id_mongo_4"]
         )

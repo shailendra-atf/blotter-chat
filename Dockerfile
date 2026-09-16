@@ -27,7 +27,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy contents of local src folder directly into /app/src
-COPY src /app/src
+COPY src_mcp /app/src_mcp
+COPY mcp /app/mcp
 RUN mkdir -p /app/logs
 
 EXPOSE 9999
