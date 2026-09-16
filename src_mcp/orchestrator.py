@@ -79,6 +79,9 @@ def _extract_query_text(response: Any) -> str:
 
 def _normalize_mongodb_pipeline(query_text: str) -> str | None:
     """Return a JSON MongoDB aggregation pipeline or None for model/tool errors."""
+    # if not isinstance(query_text, list):
+    #     logger.info(query_text[0])
+    #     query_text = json.loads(query_text[0].get('text','')).get("query","")
     if not isinstance(query_text, str):
         return None
 
@@ -205,7 +208,12 @@ async def build_orchestrator():
         user_intent = state.get("user_intent", "")
 
         schema_context = doc.get("schema", "")
-        formatted_context = schema_context.format(COLLECTION1=COLLECTION1) if schema_context else ""
+        collection = doc.get("target", "")
+        formatted_context = (
+            schema_context.replace("{COLLECTION}", collection)
+            if schema_context
+            else ""
+        )
 
         query_system_prompt = QUERY_SYSTEM_PROMPT.format(
             QUERY_GUARDRAILS_CONTEXT=QUERY_GUARDRAILS_CONTEXT,
@@ -228,7 +236,12 @@ async def build_orchestrator():
                     "final_response": "I couldn't generate a valid database query for this request.",
                 }
             logger.info(f"{query_text=}")
-            return {"mongodb_queries": [query_text]}
+            return {
+                "mongodb_queries": [{
+                    "query": query_text,
+                    "collection": collection,
+                }]
+            }
         except Exception:
             logger.exception("Failed to generate MongoDB query via MCP")
             return {"final_response": "I couldn't generate the database query for this request."}
@@ -241,6 +254,7 @@ async def build_orchestrator():
             query_string = raw_input
             if isinstance(raw_input, dict):
                 query_string = raw_input.get("query", raw_input)
+                collection = raw_input.get("collection")
             if not isinstance(query_string, str):
                 query_string = json.dumps(query_string)
 
@@ -253,8 +267,11 @@ async def build_orchestrator():
                 }
 
             try:
-                logger.info("Executing MongoDB query via MCP")
-                response = await mcp_exec_read.ainvoke({"query_string": query_string})
+                logger.info("Executing MongoDB query via MCP for collection %s", collection)
+                response = await mcp_exec_read.ainvoke({
+                    "query_string": query_string,
+                    "collection": collection,
+                })
                 extracted = _extract_query_results(response)
                 if extracted:
                     results.extend(extracted)

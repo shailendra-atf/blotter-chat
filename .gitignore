@@ -3,3 +3,4 @@
 __pycache__
 .gradio"synthetic_data.json" 
 .env
+.vscode

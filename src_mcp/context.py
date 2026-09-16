@@ -2,28 +2,43 @@ from src_mcp.config import COLLECTION1, COLLECTION2, COLLECTION3, COLLECTION4
 
 SCHEMA1='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
 ## Schema
-Collection: {COLLECTION1}
-   AssetClass: collection of tradenames which belongs to a particular asset class
-   TradeName:  This defines under which strategy (theme) the trade comes under. It also splits the Pnl amongst various traders propotionally
-   Country: 
-   ValuationDate: valuation date for which the Pnl values have been computed
-   AccountName: Name of the Account or Fund
-   ThemeName: investment strategy that the trader or portfolio manager executes in the market. Multiple TradeNames can point to one theme.
-   
-   NAVinUSD:Net Asset Value in USD for the specified financial asset, attribute, trader, and valuation date. It is the base value used to calculate PnL.
 
-   Thus:
-   DTDPnL = NAVinUSD(T) - NAVinUSD(T-1 day), where NAVinUSD(T-1 day) means the NAV on last business day
-   MTDPnL = NAVinUSD(T) - NAVinUSD(T-1 month), where NAVinUSD(T-1 month) means the NAV on the last business day of the previous month
-   YTDPnL = NAVinUSD(T) - NAVinUSD(T-1 year), where NAVinUSD(T-1 year) means the NAV on the last business day of the previous year
+Collection: {COLLECTION}
+    This collection contains all the data for a particular firm
+    AssetClass: collection of tradenames which belongs to a particular asset class
+    TradeName:  This defines under which strategy (theme) the trade comes under. It also splits the Pnl amongst various traders propotionally
+    Country: 
+    ValuationDate: valuation date for which the Pnl values have been computed
+    AccountName: Name of the Account or Fund
+    ThemeName: investment strategy that the trader or portfolio manager executes in the market. Multiple TradeNames can point to one theme.
+    
+    NAVinUSD:
+        NAVinUSD: Net Asset Value in USD for the specified financial asset, attribute, trader, and valuation date. It is the base value used to calculate PnL.
 
-   TraderName: 
-      If TraderName = "Aggregate", the value represents the sum of PnL across all traders within the Account/Fund.
-      Otherwise, TraderName refers to the specific individual trader associated with the company.
-      If TraderName = "RV", Its a system user and can be ignored. Only when being asked specifically then it should be included
+        For a selected valuation date T:
+        PnL = NAVinUSD(T) - NAVinUSD(comparison_date)
+        where the comparison date depends on the PnL period:
+        DTDPnL: T-1 day
+        MTDPnL: T-1 month
+        YTDPnL: T-1 year
 
+        Thus:
+        DTDPnL = NAVinUSD(T) - NAVinUSD(T-1 day), NAVinUSD(T-1 day) means the NAV on last business day
+        MTDPnL = NAVinUSD(T) - NAVinUSD(T-1 month), NAVinUSD(T-1 month) means the NAV on the last business day of the previous month
+        YTDPnL = NAVinUSD(T) - NAVinUSD(T-1 year), NAVinUSD(T-1 year) means the NAV on the last business day of the previous year
+
+    TraderName:
+        If TraderName = "Aggregate", the value represents the sum of PnL across all traders within the Account/Fund.
+        Otherwise, TraderName refers to the specific individual trader associated with the company.
+        If TraderName = "RV", Its a system user and can be ignored. Only when being asked specifically then it should be included
 
 ## Business definition of "last business day"
+
+There is no separate business-day calendar in MongoDB, rather it is the last available date in database.
+DO NOT calculate the last business day manually.
+There are many records of a trader's PnL on each day. so always take sum on last business day
+
+Therefore:
 
 "last business day of a month" = MAX(ValuationDate) available within that month.
 "last business day of an year" = MAX(ValuationDate) available within that year.
@@ -33,40 +48,54 @@ For month / year Pnls, always get total monthly / yearly Pnls for the last busin
 If Trader was not specified, filter by TraderName="Aggregate"
 
 Stage 1:
-For monthly / yearly requests find out "last business day" by first grouping by month / year
-Then sorting by ValuationDate date descending in each group
-Then finding the MAX(ValuationDate) as last_business_day for that group.
+For monthly/yearly requests find out "last business day" by first grouping by month/year
+Then sort by ValuationDate date and find the last ValuationDate.
 
 Stage 2:
-Find all the records by applying lookup for the last_business_day
+Apply left join on previous documents to get the records on last ValuationDate
 
 Stage 3:
 Filter by AssetClass, TradeName, ThemeName and/or AccountName if asked
 Apply TraderName/Type/dimension filters if asked.
 
 Stage 4:
-STRICTLY sum the requested PnL for each last_business_day or the group.
+STRICTLY sum the requested PnL for each last ValuationDate.
 
 Stage 5:
-If no other schema field has been used to group, keep only last business date and sum
+If no other schema field has been used to group, keep only last ValuationDate and sum
 
 Stage 6:
 limit the results to 2000
 '''
-SCHEMA2='''
-Collection: {COLLECTION2}
+
+SCHEMA2='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
+Collection: {COLLECTION}
    ValuationDate: 
    Trader: Name of Trader
    BSCharges: charges incurred in trade
    TradingExpense: expenses incurred in trade
 '''
-SCHEMA3='''
-Collection: {COLLECTION3}
+SCHEMA3='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
+Collection: {COLLECTION}
    Name: Name of Trader - the one who owns the investment strategy for a tradename
    NonKLFTraderLimit: Capital limit per trader for a valuation date at the firm level
+   StartDate: start date of limit
+   EndDate: end date of limit
+Example:
+For a target month / year the aggragate query would be:
+[
+   {{
+   StartDate: {{
+      $lte: end_target_date                
+   }},
+   EndDate: {{
+      $gte: end_target_date
+   }}
+]
+where end_target_date = last date of month / year
 '''
 SCHEMA4='''
-Collection: {COLLECTION4}
+Collection: {COLLECTION}
    Name: Name of Account/Fund
    ValuationDate: 
    USDAUMMill: AUM in million USD about the Fund
@@ -139,7 +168,6 @@ Follow these strict rules:
 
 {QUERY_GUARDRAILS_CONTEXT}
 """
-# 5. Represent all dates, months and years using Standard Extended JSON syntax: {{{{"$date": "YYYY-MM-DDTHH:mm:ssZ"}}}} instead of shell functions like ISODate("...").
 
 # GRAPH_SYSTEM_PROMPT = """
 # Make syntactically correct Mermaid chart from Markdown data.

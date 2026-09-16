@@ -8,7 +8,7 @@ from langgraph.graph.message import add_messages
 class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
     retrieved_docs: List[Dict[str, Any]]
-    mongodb_queries: Annotated[List[str], add]
+    mongodb_queries: Annotated[List[Dict[str, Any]], add]
     query_results: Annotated[List[Dict[str, Any]], add]
     final_response: str
 

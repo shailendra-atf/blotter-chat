@@ -57,14 +57,15 @@ async def generate_mongodb_query(
             # logger.info(f"{db_type_upper=}, {system_prompt=}, {user_intent=}, {target_resource=}")
             prompt_template = ChatPromptTemplate.from_messages([
                 ("system", system_prompt),
-                ("human", """Intent: {user_intent}. Resource: {target_resource}""")
+                ("human", """Intent: {user_intent}. schema: {schema_info}""")
             ])
             # logger.info(f"{prompt_template=}")
             chain = prompt_template | server_llm
             response = await asyncio.wait_for(
                 chain.ainvoke({
                     "user_intent": user_intent,
-                    "target_resource": target_resource
+                    "target_resource": target_resource,
+                    "schema_info": schema_info,
                 }),
                 timeout=180,
             )
@@ -81,7 +82,7 @@ async def generate_mongodb_query(
 
 # Expose Tool 2: Read-Only Data Engine Execution
 @mcp.tool()
-async def execute_read_query(query_string: str) -> Dict[str, Any]:
+async def execute_read_query(query_string: str, collection: str = COLLECTION1) -> Dict[str, Any]:
     """Runs a read-only SELECT database operation against SQLite storage."""
     db = await startup_db_client()
     if db is None:
@@ -103,7 +104,7 @@ async def execute_read_query(query_string: str) -> Dict[str, Any]:
             return {"query_results":f"Pipeline Validation Error: {validation_error}"}
         # logger.info(f"{pipeline=}")
 
-        target_collection = db[COLLECTION1]
+        target_collection = db[collection or COLLECTION1]
         cursor = target_collection.aggregate(pipeline, maxTimeMS=120000)
         mongo_results = await cursor.to_list()
 

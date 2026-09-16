@@ -3,7 +3,7 @@ from src_mcp.config import COLLECTION1, COLLECTION2, COLLECTION3, COLLECTION4
 SCHEMA1='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
 ## Schema
 
-Collection: {COLLECTION}
+Collection: {COLLECTION1}
     This collection contains all the data for a particular firm
     AssetClass: collection of tradenames which belongs to a particular asset class
     TradeName:  This defines under which strategy (theme) the trade comes under. It also splits the Pnl amongst various traders propotionally
@@ -79,6 +79,18 @@ SCHEMA3='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
 Collection: {COLLECTION3}
    Name: Name of Trader - the one who owns the investment strategy for a tradename
    NonKLFTraderLimit: Capital limit per trader for a valuation date at the firm level
+   StartDate: start date of limit
+   EndDate: end date of limit
+Example:
+For a target date the query would be:
+[
+    {
+        "$match": {
+            "StartDate": {"$lte": target_date},
+            "EndDate": {"$gte": target_date},
+        }
+    }
+]
 '''
 SCHEMA4='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
 Collection: {COLLECTION4}
