@@ -11,13 +11,20 @@ from pymongo.errors import ExecutionTimeout, PyMongoError
 import boto3
 from botocore.config import Config
 from langchain_aws import ChatBedrockConverse
-from config import ALLOWED_PIPELINE_STAGES, MAX_RESULTS, MODEL_ID, DB_HOST, DB_PORT, DB_NAME1
-from dependencies import logger
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from src_mcp.config import ALLOWED_PIPELINE_STAGES, MAX_RESULTS, MODEL_ID, DB_HOST, DB_PORT, DB_NAME1, bedrock
+from src_mcp.dependencies import logger
+from langchain_core.messages import BaseMessage
+from pydantic import BaseModel
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except ImportError:  # pragma: no cover - optional dependency; app should still boot
+    ChatGoogleGenerativeAI = None
 import motor.motor_asyncio
 from botocore.exceptions import ClientError, BotoCoreError
 load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=True)
-from models import *
+from src_mcp.models import *
+from src_mcp.config import LLM_TIMEOUT
 
 UNIQUE_NAMES_DICT = {}
 db = None
@@ -96,9 +103,9 @@ async def execute_mongo_query(mongo_query: list[dict], db: str, coll: str = "PnL
         logger.error(f"Execution Error: {str(e)}", exc_info=True)
         return f"Query Execution Error: {str(e)}"
 
-async def get_unique_names_from_database(db: str):
+async def get_unique_names_from_database():
     global UNIQUE_NAMES_DICT
-    
+    db = await startup_db_client()
     # logger.info("Getting Unique Proper Names...")
     
     fields = ('AssetClass', 'TradeName', 'AccountName', 'ThemeName', 'TraderName')
@@ -119,14 +126,12 @@ async def get_unique_names_from_database(db: str):
     return UNIQUE_NAMES_DICT
 
 def initialize_llm_client():
-    bedrock = False
-    llm = None
     if bedrock:
         try:
             session = boto3.Session()
             boto_config = Config(
                 connect_timeout=10,   # seconds to establish initial socket connection
-                read_timeout=180,     # seconds to wait for a response from Bedrock
+                read_timeout=LLM_TIMEOUT,     # seconds to wait for a response from Bedrock
                 retries={"max_attempts": 3, "mode": "adaptive"},
             )
 
@@ -146,6 +151,7 @@ def initialize_llm_client():
             )
             logger.info("Successfully initialized ChatBedrockConverse client.")
         except ClientError as e:
+            llm = None
             if e.response['Error']['Code'] == 'ExpiredTokenException':
                 logger.critical(f"The security token included in the request is expired", exc_info=True)
                 final_text = f"The security token included in the request is expired"
@@ -166,15 +172,30 @@ def initialize_llm_client():
             logger.critical(f"Failed to initialize LLM client: {str(e)}", exc_info=True)
     else:
         try:
-            model_id = os.getenv("MODEL_ID", "gemini-3.1-flash-lite")
-            llm = ChatGoogleGenerativeAI(model=model_id, temperature=0.0, request_timeout=5000)
-            logger.info("Successfully initialized ChatGoogleGenerativeAI client.")
-        except Exception as e:
+            llm = ChatNVIDIA(
+                model="mistralai/mistral-nemotron",
+                api_key=os.getenv("NVIDIA_API_KEY"),
+                timeout=LLM_TIMEOUT
+            )
+            logger.info("Successfully initialized ChatNVIDIA client.")
+            return llm
+        except:
+            llm = None
             logger.critical(f"Failed to initialize LLM client: {str(e)}", exc_info=True)
+
+        # if ChatGoogleGenerativeAI is None:
+        #     logger.warning("langchain-google-genai is not installed. LLM integration disabled.")
+        #     return None
+        # try:
+        #     model_id = "gemini-3.5-flash"
+        #     llm = ChatGoogleGenerativeAI(model=model_id, temperature=0.0, request_timeout=5000)
+        #     logger.info("Successfully initialized ChatGoogleGenerativeAI client.")
+        # except Exception as e:
+        #     llm = None
+        #     logger.critical(f"Failed to initialize LLM client: {str(e)}", exc_info=True)
 
     return llm
 
-llm = initialize_llm_client()
 
 async def startup_db_client():
     global db
@@ -192,3 +213,29 @@ async def startup_db_client():
     except Exception as e:
         logger.critical(f"Database Connection Error: {str(e)}", exc_info=True)
         return None
+
+def convert_messages_to_string(messages: list) -> str:
+    formatted_lines = []
+
+    for msg in messages:
+        # 1. Handle LangChain Message objects (HumanMessage, AIMessage, SystemMessage)
+        if isinstance(msg, BaseMessage):
+            role = msg.type.capitalize()  # 'human' -> 'Human', 'ai' -> 'Ai'
+            content = msg.content
+
+        # 2. Handle Pydantic models (like request.messages from FastAPI)
+        elif isinstance(msg, BaseModel):
+            role = getattr(msg, "role", "User").capitalize()
+            content = getattr(msg, "content", "")
+
+        # 3. Handle standard Python dictionaries
+        elif isinstance(msg, dict):
+            role = msg.get("role", "user").capitalize()
+            content = msg.get("content", "")
+
+        else:
+            continue
+
+        formatted_lines.append(f"{role}: {content}")
+
+    return "\n\n".join(formatted_lines)

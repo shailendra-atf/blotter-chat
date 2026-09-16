@@ -17,12 +17,12 @@ from botocore.config import Config
 from langchain_aws import ChatBedrockConverse
 from botocore.exceptions import ClientError, BotoCoreError
 from langchain_google_genai import ChatGoogleGenerativeAI
-
-from config import *
-from models import *
-from dependencies import logger
-from agents import startup_agent, execute_mongo_query
-from src_mcp.orchestrator_v1 import *
+from src_mcp.models import AgentState, TaskState
+from src_mcp.config import *
+from src_mcp.models import *
+from src_mcp.dependencies import logger
+# from agents import startup_agent, execute_mongo_query
+from src_mcp.orchestrator import build_orchestrator
 
 load_dotenv(override=True)
 
@@ -100,125 +100,125 @@ async def verify_api_key(
         )
     return token
 
-@app.on_event("startup")
-async def startup_db_client():
-    global db
-    """Verify Mongo connection asynchronously on application startup."""
-    connection_string = f"mongodb://{DB_HOST}:{DB_PORT}/{DB_NAME}?authSource=admin"
+# @app.on_event("startup")
+# async def startup_db_client():
+#     global db
+#     """Verify Mongo connection asynchronously on application startup."""
+#     connection_string = f"mongodb://{DB_HOST}:{DB_PORT}/{DB_NAME}?authSource=admin"
 
-    try:
-        logger.info("Initializing Async Motor MongoDB Client...")
-        client = motor.motor_asyncio.AsyncIOMotorClient(connection_string, serverSelectionTimeoutMS=5000)
-        db = client[DB_NAME]
-        logger.info(f"Initialized Motor Client for database: '{DB_NAME}'")
-    except Exception as e:
-        logger.critical(f"Database Connection Error: {str(e)}", exc_info=True)
+#     try:
+#         logger.info("Initializing Async Motor MongoDB Client...")
+#         client = motor.motor_asyncio.AsyncIOMotorClient(connection_string, serverSelectionTimeoutMS=5000)
+#         db = client[DB_NAME]
+#         logger.info(f"Initialized Motor Client for database: '{DB_NAME}'")
+#     except Exception as e:
+#         logger.critical(f"Database Connection Error: {str(e)}", exc_info=True)
 
-    if client:
-        try:
-            await client.admin.command("ping")
-            logger.info("Pinged MongoDB cluster asynchronously. Connection verified.")
-        except Exception as e:
-            logger.critical(f"Async startup ping failed: {str(e)}")
+#     if client:
+#         try:
+#             await client.admin.command("ping")
+#             logger.info("Pinged MongoDB cluster asynchronously. Connection verified.")
+#         except Exception as e:
+#             logger.critical(f"Async startup ping failed: {str(e)}")
 
 # -------------------------------------------------------------------
 # 3. LLM Initialization
 # -------------------------------------------------------------------
-agent = None
-@app.on_event("startup")
-def initialize_llm_client():
-    global llm, agent
-    try:
-        session = boto3.Session()
-        boto_config = Config(
-            connect_timeout=10,   # seconds to establish initial socket connection
-            read_timeout=180,     # seconds to wait for a response from Bedrock
-            retries={"max_attempts": 3, "mode": "adaptive"},
-        )
+# agent = None
+# @app.on_event("startup")
+# def initialize_llm_client():
+#     global llm, agent
+#     try:
+#         session = boto3.Session()
+#         boto_config = Config(
+#             connect_timeout=10,   # seconds to establish initial socket connection
+#             read_timeout=180,     # seconds to wait for a response from Bedrock
+#             retries={"max_attempts": 3, "mode": "adaptive"},
+#         )
 
-        bedrock_client = session.client("bedrock-runtime", config=boto_config)
-        # MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
-        llm = ChatBedrockConverse(
-            model=MODEL_ID,
-            client=bedrock_client,
-            region_name=os.getenv("AWS_DEFAULT_REGION"),
-            temperature=0.0,
-            max_tokens=8192,
-            disable_streaming=False,
-            additional_model_request_fields={
-                "top_k":1,
-                "top_p":1,
-            }
-        )
-        logger.info("Successfully initialized ChatBedrockConverse client.")
-        agent = startup_agent(llm)
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'ExpiredTokenException':
-            logger.critical(f"The security token included in the request is expired", exc_info=True)
-            final_text = f"The security token included in the request is expired"
-            return ChatCompletionResponse(
-                id=f"chatcmpl-{uuid.uuid4()}",
-                created=int(time.time()),
-                model=MODEL_ID,
-                choices=[
-                    Choice(
-                        index=0,
-                        message=ChoiceMessage(role="assistant", content=final_text),
-                        finish_reason="stop",
-                    )
-                ],
-                usage=UsageInfo(),
-            )
-    except Exception as e:
-        logger.critical(f"Failed to initialize LLM client: {str(e)}", exc_info=True)
-    # try:
-    #     MODEL_ID = "gemini-3.1-flash-lite"
-    #     llm = ChatGoogleGenerativeAI(model=MODEL_ID, temperature=0.0, request_timeout=5000)
-    #     logger.info("Successfully initialized ChatGoogleGenerativeAI client.")
-    #     agent = startup_agent(llm)
-    # except Exception as e:
-    #     logger.critical(f"Failed to initialize LLM client: {str(e)}", exc_info=True)
-    #     final_text = f"Failed to initialize LLM client: {str(e)}"
-    #     return ChatCompletionResponse(
-    #         id=f"chatcmpl-{uuid.uuid4()}",
-    #         created=int(time.time()),
-    #         model=MODEL_ID,
-    #         choices=[
-    #             Choice(
-    #                 index=0,
-    #                 message=ChoiceMessage(role="assistant", content=final_text),
-    #                 finish_reason="stop",
-    #             )
-    #         ],
-    #         usage=UsageInfo(),
-    #     )
+#         bedrock_client = session.client("bedrock-runtime", config=boto_config)
+#         # MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+#         llm = ChatBedrockConverse(
+#             model=MODEL_ID,
+#             client=bedrock_client,
+#             region_name=os.getenv("AWS_DEFAULT_REGION"),
+#             temperature=0.0,
+#             max_tokens=8192,
+#             disable_streaming=False,
+#             additional_model_request_fields={
+#                 "top_k":1,
+#                 "top_p":1,
+#             }
+#         )
+#         logger.info("Successfully initialized ChatBedrockConverse client.")
+#         agent = startup_agent(llm)
+#     except ClientError as e:
+#         if e.response['Error']['Code'] == 'ExpiredTokenException':
+#             logger.critical(f"The security token included in the request is expired", exc_info=True)
+#             final_text = f"The security token included in the request is expired"
+#             return ChatCompletionResponse(
+#                 id=f"chatcmpl-{uuid.uuid4()}",
+#                 created=int(time.time()),
+#                 model=MODEL_ID,
+#                 choices=[
+#                     Choice(
+#                         index=0,
+#                         message=ChoiceMessage(role="assistant", content=final_text),
+#                         finish_reason="stop",
+#                     )
+#                 ],
+#                 usage=UsageInfo(),
+#             )
+#     except Exception as e:
+#         logger.critical(f"Failed to initialize LLM client: {str(e)}", exc_info=True)
+#     # try:
+#     #     MODEL_ID = "gemini-3.1-flash-lite"
+#     #     llm = ChatGoogleGenerativeAI(model=MODEL_ID, temperature=0.0, request_timeout=5000)
+#     #     logger.info("Successfully initialized ChatGoogleGenerativeAI client.")
+#     #     agent = startup_agent(llm)
+#     # except Exception as e:
+#     #     logger.critical(f"Failed to initialize LLM client: {str(e)}", exc_info=True)
+#     #     final_text = f"Failed to initialize LLM client: {str(e)}"
+#     #     return ChatCompletionResponse(
+#     #         id=f"chatcmpl-{uuid.uuid4()}",
+#     #         created=int(time.time()),
+#     #         model=MODEL_ID,
+#     #         choices=[
+#     #             Choice(
+#     #                 index=0,
+#     #                 message=ChoiceMessage(role="assistant", content=final_text),
+#     #                 finish_reason="stop",
+#     #             )
+#     #         ],
+#     #         usage=UsageInfo(),
+#     #     )
 
-@app.on_event("startup")
-async def get_unique_names_from_database():
-    global UNIQUE_NAMES_DICT
-    UNIQUE_NAMES_DICT = {}
+# @app.on_event("startup")
+# async def get_unique_names_from_database():
+#     global UNIQUE_NAMES_DICT
+#     UNIQUE_NAMES_DICT = {}
     
-    logger.info("Getting Unique Proper Names...")
+#     logger.info("Getting Unique Proper Names...")
     
-    fields = ('AssetClass', 'TradeName', 'AccountName', 'ThemeName', 'TraderName')
+#     fields = ('AssetClass', 'TradeName', 'AccountName', 'ThemeName', 'TraderName')
     
-    for field in fields:
-        # Fixed: Field reference inside $group needs a '$' prefix e.g., '$AssetClass'
-        query_pipeline = [
-            {'$group': {'_id': f'${field}'}},
-            {'$project': {'_id': 0, field: '$_id'}}
-        ]
+#     for field in fields:
+#         # Fixed: Field reference inside $group needs a '$' prefix e.g., '$AssetClass'
+#         query_pipeline = [
+#             {'$group': {'_id': f'${field}'}},
+#             {'$project': {'_id': 0, field: '$_id'}}
+#         ]
         
-        # Use await instead of asyncio.run() because we are already inside an async function
-        results = await execute_mongo_query.coroutine(mongo_query=query_pipeline, get_graph=False)
-        # Extract unique values from the query result
-        for result in results:
-            reversed_result = {value: key for key, value in result.items()}
-            UNIQUE_NAMES_DICT.update(reversed_result)
+#         # Use await instead of asyncio.run() because we are already inside an async function
+#         results = await execute_mongo_query.coroutine(mongo_query=query_pipeline, get_graph=False)
+#         # Extract unique values from the query result
+#         for result in results:
+#             reversed_result = {value: key for key, value in result.items()}
+#             UNIQUE_NAMES_DICT.update(reversed_result)
 
-    # with open('UNIQUE_NAMES_DICT.json','w', encoding="utf-8") as f:
-    #     json.dump(UNIQUE_NAMES_DICT, f)
-    # logger.info(f"All unique values loaded: {len(UNIQUE_NAMES_DICT)=}")
+#     # with open('UNIQUE_NAMES_DICT.json','w', encoding="utf-8") as f:
+#     #     json.dump(UNIQUE_NAMES_DICT, f)
+#     # logger.info(f"All unique values loaded: {len(UNIQUE_NAMES_DICT)=}")
 
 
 # -------------------------------------------------------------------
@@ -376,6 +376,8 @@ async def chat_completions(request: ChatCompletionRequest):
     
     # Check if client requested a streamed response
     is_stream = getattr(request, "stream", False)
+    # is_stream = False
+    graph = await build_orchestrator()
 
     # -------------------------------------------------------------------
     # STREAMING RESPONSE BRANCH
@@ -408,7 +410,7 @@ async def chat_completions(request: ChatCompletionRequest):
                     }]
                 })}\n\n"
 
-                async for event in agent.astream_events(
+                async for event in graph.astream_events(
                     {"messages": formatted_messages},
                     version="v2"
                 ):
@@ -565,13 +567,23 @@ async def chat_completions(request: ChatCompletionRequest):
                 yield "data: [DONE]\n\n"
         return StreamingResponse(event_generator(), media_type="text/event-stream")
       else:
-        results = await agent.ainvoke({"messages": formatted_messages})
+        # results = await agent.ainvoke({"messages": formatted_messages})
+        logger.info(f"{formatted_messages=}")
+        initial_state = {
+            "messages": formatted_messages,
+            "retrieved_docs": [],
+            "mongodb_queries": [],
+            "query_results": [],
+            "final_response": ""
+        }
+        final_state = await graph.ainvoke(initial_state)
+        logger.info(f"{final_state=}")
+        # logger.info(f"{final_state["messages"]=}")
 
         # Extract messages from agent output
         tool_output = None
         llm_analysis = None
-
-        for msg in reversed(results["messages"][-CONTEXT_MESSAGES_TO_CONSIDER:]):
+        for msg in reversed(final_state["messages"][-CONTEXT_MESSAGES_TO_CONSIDER:]):
             # Capture Tool Output
             if isinstance(msg, ToolMessage) and not tool_output:
                 tool_output = msg.content
@@ -603,7 +615,8 @@ async def chat_completions(request: ChatCompletionRequest):
         # Final sanity check: never allow the raw MODEL_ID to escape to the user
         if final_text.strip() == MODEL_ID or final_text.strip().startswith("anthropic."):
             final_text = "No matching records found in the database for the given criteria."
-
+        final_text = json.dumps(final_state["query_results"])
+        logger.info(f"{final_text=}")
         end_time = time.time()
         logger.info(f"Request processed in {end_time - start_time:.2f} seconds.")
         return ChatCompletionResponse(

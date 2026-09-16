@@ -9,27 +9,28 @@ load_dotenv(override=True)
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Send
 from pathlib import Path
-from context import QUERY_GUARDRAILS_CONTEXT, QUERY_SYSTEM_PROMPT
-from config import COLLECTION1
 
-from config import MODEL_ID
-from models import RouterDecision, WorkerState, MasterState, AgentState, TaskState
-from utils import execute_mongo_query, llm
-import dependencies # this statement is required
-from dependencies import logger
-from utils import startup_db_client, get_unique_names_from_database
-from rag_ingestion import initialize_chromadb
+from src_mcp.context import QUERY_GUARDRAILS_CONTEXT, QUERY_SYSTEM_PROMPT
+from src_mcp.config import COLLECTION1, SIMILARITY_THRESHOLD
+from src_mcp.models import AgentState, TaskState
 
+# import src_mcp.dependencies # this statement is required
+from src_mcp.dependencies import logger
+from src_mcp.utils import startup_db_client, get_unique_names_from_database
+from src_mcp.rag_ingestion import initialize_chromadb
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 # Configure the endpoint for your HTTP SSE MCP Server
 MCP_SERVER_SSE_URL = "http://127.0.0.1:8090/sse"
 
 async def _bootstrap_runtime():
-    db = await startup_db_client()
+    UNIQUE_NAMES_DICT = await get_unique_names_from_database()
     chroma_collection = initialize_chromadb()
-    return chroma_collection, {}
+    return chroma_collection, UNIQUE_NAMES_DICT
 
-structured_router = llm.with_structured_output(RouterDecision)
 
 # ==========================================
 # UPDATED BUILD ORCHESTRATOR (USING SSE API)
@@ -37,9 +38,6 @@ structured_router = llm.with_structured_output(RouterDecision)
 async def build_orchestrator():
     chroma_collection, UNIQUE_NAMES_DICT = await _bootstrap_runtime()
     
-    # ---------------------------------------------------------------
-    # CHANGED: Replaced stdio command config with SSE HTTP Endpoint API
-    # ---------------------------------------------------------------
     mcp_client = MultiServerMCPClient({
         "mcp_web_tools": {
             "url": MCP_SERVER_SSE_URL,
@@ -52,7 +50,7 @@ async def build_orchestrator():
     mcp_tools = {tool.name: tool for tool in tools_list}
     
     # Fetch HTTP API Tools exposed by FastMCP
-    mcp_find_tables = mcp_tools.get("find_relevant_tables")
+    mcp_generate_query = mcp_tools.get("generate_mongodb_query")
     mcp_exec_read = mcp_tools.get("execute_read_query")
 
     # ==========================================
@@ -64,26 +62,28 @@ async def build_orchestrator():
         logger.info(f"rag_worker_node called")
         
         # Call RAG tool exposed over MCP SSE API
-        if mcp_find_tables:
-            rag_schema_info = await mcp_find_tables.ainvoke({"user_intent": state.get("user_prompt")})
-            logger.info(f"MCP API Schema Result: {rag_schema_info}")
-
-        results = chroma_collection.query(query_texts=[state.get("user_prompt")], n_results=min(2, chroma_collection.count()))
-        if not results or not results["metadatas"]:
-            return "No matching database schemas located for this intent."
-        
-        return {"retrieved_docs": results["metadatas"]}
+        results = chroma_collection.query(query_texts=[state.get("messages")], n_results=min(2, chroma_collection.count()), include=["metadatas","distances"])
+        if not results or not results.get("metadatas") or not results["metadatas"][0]:
+            return {
+                "retrieved_docs": [],
+                "final_response": "No matching database schemas located for this intent."
+            }
+        distances = results["distances"][0]
+        indices_sim_scores = [idx for idx, d in enumerate(distances) if 1-d > SIMILARITY_THRESHOLD]
+        logger.info(f"similarity_scores: {[1-d for idx, d in enumerate(distances)]}, {[1-d for idx, d in enumerate(distances) if 1-d > SIMILARITY_THRESHOLD]=}")
+        retrieved_docs = [metadata for idx, metadata in enumerate(results["metadatas"][0]) if idx in indices_sim_scores]
+        return {"retrieved_docs": retrieved_docs}
 
     def supervisor_fanout(state: AgentState):
         """Supervisor router: Dynamic parallel fan-out using Send()."""
         logger.info(f"supervisor_fanout called")
         fanout_branches = []
-        for doc in state["retrieved_docs"][0]:
+        for doc in state["retrieved_docs"]:
             logger.info(f'{doc=}')
             fanout_branches.append(
                 Send("generate_mongodb_query_node", {
                     "doc": doc, 
-                    "user_prompt": state["user_prompt"]
+                    "messages": state["messages"]
                 })
             )
         return fanout_branches
@@ -91,28 +91,46 @@ async def build_orchestrator():
     async def generate_mongodb_query_node(state: TaskState):
         """Node formulating target queries."""
         logger.info(f"generate_mongodb_query_node called")
+
+
         doc = state.get("doc", {})
-        logger.info(f"retrieved_doc: {json.dumps(doc, indent=4)}")
 
         query_system_prompt = QUERY_SYSTEM_PROMPT.format(
             QUERY_GUARDRAILS_CONTEXT=QUERY_GUARDRAILS_CONTEXT,
+            UNIQUE_NAMES_DICT=UNIQUE_NAMES_DICT,
             CONTEXT=doc.get("schema", "").format(COLLECTION1=COLLECTION1),
         )
-        
-        # Example query string generated by model logic
-        query = f"db.{doc.get('target', 'collection')}.find({{}})"
-        
-        return {"mongodb_queries": [query]}
+        result = await mcp_generate_query.ainvoke({
+            "system_prompt": query_system_prompt,
+            "db_type": doc.get("db_type",""),
+            "target_resource": doc.get("db",""),
+            "schema_info": doc.get("schema",""),
+            "user_intent": state.get("messages", ""),#[-1].content,
+        })
+
+        logger.info(f'{result=}')
+        if isinstance(result, dict):
+            query_str = result["text"]
+        elif isinstance(result, list):
+            query_str = json.loads(result[0]["text"].replace('```json','').replace('```','')).get("query","")
+        else:
+            query_str = result
+        logger.info(f'{query_str=}')
+        return {"mongodb_queries": [query_str]}
 
     async def execute_mongodb_query_node(state: AgentState):
         """Executes read operations against the database via the MCP API."""
         logger.info(f"execute_mongodb_query_node called")
         results = []
         
-        for q in state.get("mongodb_queries", []):
+        for raw_input in state.get("mongodb_queries", []):
             if mcp_exec_read:
                 # Call execute_read_query API tool endpoint
-                res = await mcp_exec_read.ainvoke({"query_string": "SELECT * FROM financial_metrics;"})
+                query_str = raw_input["text"] if isinstance(raw_input, dict) else raw_input
+                query_str = """[{"$match": {"TraderName": "Rajesh Mahadevan", "ValuationDate": {"$gte": {"$date": "2026-01-01T00:00:00Z"}, "$lte": {"$date": "2026-01-31T23:59:59Z"}}}}, {"$group": {"_id": null, "MTDPnL": {"$sum": "$MTDPnL"}}}, {"$project": {"_id": 0, "MTDPnL": 1}}]"""
+                res = await mcp_exec_read.ainvoke({"query_string": query_str})
+                logger.info(f"{json.loads(res[0]['text'])=}")
+                res = json.loads(res[0]['text'])['mongo_results']
                 results.append(res)
                 
         return {"query_results": results}
@@ -134,17 +152,23 @@ async def build_orchestrator():
         supervisor_fanout,
         ["generate_mongodb_query_node"]
     )
-
+    # builder.add_edge("generate_mongodb_query_node", END)
     builder.add_edge("generate_mongodb_query_node", "execute_mongodb_query_node")
     builder.add_edge("execute_mongodb_query_node", END)
 
-    return builder.compile()
+    app = builder.compile()
+
+    # with open("langgraph_architecture.png", "wb") as f:
+    #     f.write(app.get_graph().draw_mermaid_png())
+    return app
 
 async def run_pipeline():
-    cross_db_query = "can u tell me the revenue for financial metrics"
+    cross_db_query = "Show me monthly MTDPnL of Rajesh Mahadevan starting for 2026, consider last day of the month"
+    # cross_db_query = "show me monthly limits OF Rajesh Mahadevan starting for 2026, consider last day of the month"
+    # cross_db_query = "Show me monthly MTDPnL and limits of Rajesh Mahadevan starting for 2026, consider last day of the month"
 
     initial_state = {
-        "user_prompt": cross_db_query,
+        "messages": cross_db_query,
         "retrieved_docs": [],
         "mongodb_queries": [],
         "query_results": [],

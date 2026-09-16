@@ -1,8 +1,8 @@
-from config import COLLECTION1, COLLECTION2, COLLECTION3, COLLECTION4
+from src_mcp.config import COLLECTION1, COLLECTION2, COLLECTION3, COLLECTION4
 
 CONTEXT='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
 ## Schema
-Collection: {{COLLECTION1}}
+Collection: {COLLECTION1}
    AssetClass: collection of tradenames which belongs to a particular asset class
    TradeName:  This defines under which strategy (theme) the trade comes under. It also splits the Pnl amongst various traders propotionally
    Country: 
@@ -24,7 +24,7 @@ Collection: {{COLLECTION1}}
    MTDPnL = NAVinUSD(T) - NAVinUSD(T-1 month), NAVinUSD(T-1 month) means the NAV on the last business day of the previous month
    YTDPnL = NAVinUSD(T) - NAVinUSD(T-1 year), NAVinUSD(T-1 year) means the NAV on the last business day of the previous year
 
-   TraderName:
+   TraderName: 
       If TraderName = "Aggregate", the value represents the sum of PnL across all traders within the Account/Fund.
       Otherwise, TraderName refers to the specific individual trader associated with the company.
       If TraderName = "RV", Its a system user and can be ignored. Only when being asked specifically then it should be included
@@ -74,8 +74,8 @@ Collection: {COLLECTION2}
 '''
 SCHEMA3=f'''
 Collection: {COLLECTION3}
-   Name: Name of Trader
-   NonKLFTraderLimit: Limit in USD that a Trader can spend
+   Name: Name of Trader - the one who owns the investment strategy for a tradename
+   NonKLFTraderLimit: Capital limit per trader for a valuation date at the firm level
 '''
 SCHEMA4=f'''
 Collection: {COLLECTION4}
@@ -143,10 +143,11 @@ Follow these strict rules:
 1. Output ONLY a raw JSON array representing the PyMongo aggregation pipeline with no markdown formatting or code blocks.
 2. Task: Generate an consistently precise, OPTIMIZED MongoDB aggregation pipeline
 3. Projection Requirement: Return ONLY the required field. Exclude '_id' and all other metadata fields using a $project stage at the end.
-6. Represent all dates, months and years using Standard Extended JSON syntax: {{{{"$date": "YYYY-MM-DDTHH:mm:ssZ"}}}} instead of shell functions like ISODate("...").
-7. STRICTLY sum the requested PnL for each group.
-9. DO NOT use non-existent fields like "year". Filter date ranges on "ValuationDate" using ISODate object formatting: {{{{"$gte": {{{{"$date": "YYYY-01-01T00:00:00Z"}}}}, "$lte": {{{{"$date": "YYYY-12-31T23:59:59Z"}}}}. Similarly for month queries.
-10. DO NOT generate delete, alter, drop, create queries, generate read only queries.
+4. First identify all unidentified, unrecognized, or proper names from the user's text and check if they exist as key or STRICTLY any complete word in the provided Python dictionary
+5. Represent all dates, months and years using Standard Extended JSON syntax: {{{{"$date": "YYYY-MM-DDTHH:mm:ssZ"}}}} instead of shell functions like ISODate("...").
+6. STRICTLY sum the requested PnL for each group.
+7. DO NOT use non-existent fields like "year". Filter date ranges on "ValuationDate" using ISODate object formatting: {{{{"$gte": {{{{"$date": "YYYY-01-01T00:00:00Z"}}}}, "$lte": {{{{"$date": "YYYY-12-31T23:59:59Z"}}}}. Similarly for month queries.
+8. DO NOT generate delete, alter, drop, create queries, generate read only queries.
 
 {QUERY_GUARDRAILS_CONTEXT}
 """

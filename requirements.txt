@@ -4,6 +4,7 @@ pymongo
 langchain
 langchain-aws
 langchain_core
+langchain-google-genai
 pydantic
 python-dotenv
 motor
@@ -21,4 +22,5 @@ langgraph-sdk
 chromadb
 langchain-mcp-adapters
 sse-starlette
+langchain-nvidia-ai-endpoints
 # uv pip install --upgrade "langchain-mcp-adapters>=0.1.0" "mcp>=1.3.0" "fastmcp>=0.1.0" "langgraph>=0.2.20"

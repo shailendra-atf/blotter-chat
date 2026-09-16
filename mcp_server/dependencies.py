@@ -7,16 +7,10 @@ from datetime import datetime
 
 load_dotenv(override=True)
 
-import sys
-
-# Force UTF-8 stream output for console logging on Windows
-sys.stdout.reconfigure(encoding="utf-8")
-sys.stderr.reconfigure(encoding="utf-8")
-
 log_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs"))
 log_file = os.path.join(
     log_dir,
-    f"api_client_mcp_{datetime.now().strftime('%Y-%m-%d')}.log",
+    f"api_server_mcp_{datetime.now().strftime('%Y-%m-%d')}.log",
 )
 
 logging.basicConfig(
@@ -24,6 +18,4 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
     handlers=[logging.StreamHandler(sys.stderr), logging.FileHandler(log_file)],
 )
-logger = logging.getLogger("client")
-
-# set PYTHONUTF8=1
+logger = logging.getLogger("mcp-server")

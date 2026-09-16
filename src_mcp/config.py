@@ -21,6 +21,8 @@ MAX_PROMPT_LENGTH =4000
 MAX_RESULTS = 5000
 LIMIT_RESULTS = 1000
 CONTEXT_MESSAGES_TO_CONSIDER = 5  # Limit to last N messages for context
+# SIMILARITY_THRESHOLD=.65
+SIMILARITY_THRESHOLD=.25
 
 MODEL_ID ="anthropic.claude-3-5-sonnet-20240620-v1:0"
 
@@ -31,4 +33,8 @@ ALLOWED_PIPELINE_STAGES = {
     "$replaceWith", "$unset", "$sample",
 }
 
-# SSE_Client = "http://localhost:9996/sse"
+# Configure the endpoint for your HTTP SSE MCP Server
+MCP_SERVER_SSE_URL = "http://127.0.0.1:8090/sse"
+
+LLM_TIMEOUT=180
+bedrock = True
