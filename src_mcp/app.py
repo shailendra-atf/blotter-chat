@@ -382,7 +382,7 @@ async def chat_completions(request: ChatCompletionRequest, http_request: Request
     # ]
     
     # Honor the client's requested response mode.
-    is_stream = request.stream is False
+    is_stream = request.stream is True
     graph = getattr(http_request.app.state, "graph", None)
     if graph is None:
         graph = await build_orchestrator()
@@ -404,7 +404,7 @@ async def chat_completions(request: ChatCompletionRequest, http_request: Request
                         'model': request.model or MODEL_ID,
                         'choices': [{
                             'index': 0,
-                            'delta': {'role': 'assistant', 'content': ''},
+                            'delta': {'role': 'assistant', 'content': f'{description}\n'},
                             'finish_reason': None
                         }],
                         'status': {'description': description, 'done': done}
@@ -420,13 +420,13 @@ async def chat_completions(request: ChatCompletionRequest, http_request: Request
                             final_response = payload.get("final_response", final_response)
 
                         if node_name == "rag_worker":
-                            status = "📚 Finding relevant data sources..."
+                            status = "📚 Relevant data sources found..."
                         elif node_name == "generate_mongodb_query_node":
-                            status = "🔧 Generating MongoDB query..."
+                            status = "🔧 Generated MongoDB query..."
                         elif node_name == "execute_mongodb_query_node":
-                            status = "⚡ Executing MongoDB query..."
+                            status = "⚡ Executed MongoDB query..."
                         elif node_name == "format_response_node":
-                            status = "📊 Preparing results..."
+                            status = "📊 Prepared results..."
                         else:
                             status = f"🔄 Updating {node_name}..."
 

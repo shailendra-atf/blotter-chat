@@ -8,7 +8,7 @@ from langgraph.types import Send
 
 load_dotenv(override=True)
 
-from src_mcp.config import COLLECTION1, MCP_SERVER_SSE_URL, SIMILARITY_THRESHOLD
+from src_mcp.config import MCP_SERVER_SSE_URL, SIMILARITY_THRESHOLD
 from src_mcp.context import QUERY_GUARDRAILS_CONTEXT, QUERY_SYSTEM_PROMPT
 from src_mcp.dependencies import logger
 from src_mcp.models import AgentState, TaskState
@@ -175,6 +175,7 @@ async def build_orchestrator():
         distances = results.get("distances", [[]])[0]
         indices = [idx for idx, distance in enumerate(distances) if 1 - distance > SIMILARITY_THRESHOLD]
         similarity_scores = [1-distance for idx, distance in enumerate(distances)]
+        max_index = [similarity_scores.index(max(similarity_scores))]
         logger.info(f"{similarity_scores=}")
         retrieved_docs = [
             metadata for idx, metadata in enumerate(results["metadatas"][0]) if idx in indices
@@ -388,4 +389,8 @@ async def build_orchestrator():
     builder.add_edge("execute_mongodb_query_node", "format_response_node")
     builder.add_edge("format_response_node", END)
 
-    return builder.compile()
+    app = builder.compile()
+
+    with open("langgraph_architecture.png", "wb") as f:
+        f.write(app.get_graph().draw_mermaid_png())
+    return app

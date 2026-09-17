@@ -1,10 +1,10 @@
 DB_HOST="10.1.2.40"
 DB_PORT=27017
 DB_NAME1="ValuationSummary04June"
-COLLECTION1="PnLCOB"
-COLLECTION2="TraderFundCharges"
-COLLECTION3="TraderLimit"
-COLLECTION4="FundUSDAum"
+PnLCOBCollection="PnLCOB"
+TraderFundChargesCollection="TraderFundCharges"
+TraderLimitCollection="TraderLimit"
+FundUSDAumCollection="FundUSDAum"
 
 # DB_HOST="localhost"
 # DB_PORT=27017

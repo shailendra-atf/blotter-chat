@@ -1,5 +1,5 @@
 import chromadb
-from src_mcp.config import COLLECTION1, COLLECTION2, COLLECTION3, COLLECTION4, DB_NAME1
+from src_mcp.config import PnLCOBCollection, TraderFundChargesCollection, TraderLimitCollection, FundUSDAumCollection, DB_NAME1
 from src_mcp.context import SCHEMA1, SCHEMA2, SCHEMA3, SCHEMA4
 from src_mcp.dependencies import logger
 
@@ -18,18 +18,18 @@ def initialize_chromadb():
         # Perform your ingestion pipeline here
         collection.upsert(
             documents=[
-                "This collection contains NAVinUSD, Daily, Monthly and Yearly PnL (Profit and Losses) of RV Capital firm for various valuation dates - for each fund / assets / themes / traders / tradenames.",
-                # "Contains Balance sheet Charges and Expenses done by Trader on that ValuationDate. This Collection doesn not contain PnL.",
-                "This collection contains Authorised Limit's that a Trader can spend.",
-                # "Contains AUM in million USD about the Fund",
+                "This collection contains Daily, Monthly and Yearly PnLs (Profit and Losses) of RV Capital firm for various valuation dates - against each of its fund splitted by tradename/asset/themes/traders.",
+                "This collection Contains Balance sheet Charges and Expenses done by Trader on that ValuationDate.",
+                "This collection contains Capital Limit's that a Trader is allocated in a month",
+                "This collection Contains AUM in USD of the Fund for various valuation dates ",
             ],
             metadatas=[
-                {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION1, "schema": SCHEMA1.format(COLLECTION=COLLECTION1)},
-                # {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION2, "schema": SCHEMA2.format(COLLECTION=COLLECTION2)},
-                {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION3, "schema": SCHEMA3.format(COLLECTION=COLLECTION3)},
-                # {"db_type": "MongoDB", "db":DB_NAME1, "target": COLLECTION4, "schema": SCHEMA4.format(COLLECTIO4=COLLECTION4)},
+                {"db_type": "MongoDB", "db":DB_NAME1, "target": PnLCOBCollection, "schema": SCHEMA1.format(COLLECTION=PnLCOBCollection)},
+                {"db_type": "MongoDB", "db":DB_NAME1, "target": TraderFundChargesCollection, "schema": SCHEMA2.format(COLLECTION=TraderFundChargesCollection)},
+                {"db_type": "MongoDB", "db":DB_NAME1, "target": TraderLimitCollection, "schema": SCHEMA3.format(COLLECTION=TraderLimitCollection)},
+                {"db_type": "MongoDB", "db":DB_NAME1, "target": FundUSDAumCollection, "schema": SCHEMA4.format(COLLECTION=FundUSDAumCollection)},
             ],
-            ids=["id_mongo_1", "id_mongo_2"]#, "id_mongo_3", "id_mongo_4"]
+            ids=["id_mongo_1", "id_mongo_2", "id_mongo_3", "id_mongo_4"]
         )
     else:
         logger.info(f"Index already exists...")

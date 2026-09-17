@@ -5,12 +5,17 @@ from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
 
+def merge_final_response(current: str, update: str) -> str:
+    """Allow parallel workers to publish a response without conflicting writes."""
+    return update or current
+
+
 class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
     retrieved_docs: List[Dict[str, Any]]
     mongodb_queries: Annotated[List[Dict[str, Any]], add]
     query_results: Annotated[List[Dict[str, Any]], add]
-    final_response: str
+    final_response: Annotated[str, merge_final_response]
 
 
 def make_initial_agent_state(messages: List[BaseMessage]) -> AgentState:

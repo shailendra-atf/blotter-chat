@@ -1,16 +1,17 @@
-from src_mcp.config import COLLECTION1, COLLECTION2, COLLECTION3, COLLECTION4
 
-SCHEMA1='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
+SCHEMA1='''
+### Role & Objective
+You are an expert MongoDB Query Generator. Convert natural language user requests about financial or performance data into strict, production-ready MongoDB queries/aggregation pipelines based on the provided document schema.
+
 ## Schema
-
 Collection: {COLLECTION}
-    This collection contains all the data for a particular firm
+    This collection contains all the data for the entire firm
     AssetClass: collection of tradenames which belongs to a particular asset class
     TradeName:  This defines under which strategy (theme) the trade comes under. It also splits the Pnl amongst various traders propotionally
     Country: 
-    ValuationDate: valuation date for which the Pnl values have been computed
+    ValuationDate: valuation date for which the Pnl values got computed
     AccountName: Name of the Account or Fund
-    ThemeName: investment strategy that the trader or portfolio manager executes in the market. Multiple TradeNames can point to one theme.
+    ThemeName: investment strategy that the trader or portfolio manager executes in the market. Multiple TradeNames can come under one theme.
     
     NAVinUSD:
         NAVinUSD: Net Asset Value in USD for the specified financial asset, attribute, trader, and valuation date. It is the base value used to calculate PnL.
@@ -18,33 +19,77 @@ Collection: {COLLECTION}
         For a selected valuation date T:
         PnL = NAVinUSD(T) - NAVinUSD(comparison_date)
         where the comparison date depends on the PnL period:
-        DTDPnL: T-1 day
-        MTDPnL: T-1 month
-        YTDPnL: T-1 year
+        DTDPnL: T-1 day, also referred as Daily PnL
+        MTDPnL: T-1 month, also referred as Monthly PnL
+        YTDPnL: T-1 year, also referred as Yearly PnL
 
         Thus:
         DTDPnL = NAVinUSD(T) - NAVinUSD(T-1 day), NAVinUSD(T-1 day) means the NAV on last business day
         MTDPnL = NAVinUSD(T) - NAVinUSD(T-1 month), NAVinUSD(T-1 month) means the NAV on the last business day of the previous month
         YTDPnL = NAVinUSD(T) - NAVinUSD(T-1 year), NAVinUSD(T-1 year) means the NAV on the last business day of the previous year
-
+        MTD stands for monthly, YTD stands for yearly and DTD stands for Daily
     TraderName:
-        If TraderName = "Aggregate", the value represents the sum of PnL across all traders within the Account/Fund.
-        Otherwise, TraderName refers to the specific individual trader associated with the company.
+        for key "TraderName" there could be four alias as mentioned: "Trader" OR "Porfolio Manager" OR "PM"
+        Trader Name refers to that human whose respective financial asset is being calculated.
+        If TraderName = "Aggregate", the value represents the sum of PnL across all traders within that Account/Fund, TradeName, Theme, AssetClass
         If TraderName = "RV", Its a system user and can be ignored. Only when being asked specifically then it should be included
 
-## Business definition of "last business day"
+### Data Schema Context
+- Date Field: `ValuationDate` (Stored as BSON ISODate type e.g., ISODate("2025-01-02T00:00:00.000Z"))
+- Other Fields: `AccountName`, `TradeName`, `DTDPnL`, `MTDPnL`, `YTDPnL`, `NAVinUSD`, etc.
 
-There is no separate business-day calendar in MongoDB, rather it is the last available date in database.
-DO NOT calculate the last business day manually.
-There are many records of a trader's PnL on each day. so always take sum on last business day
+### Core Query Rules for Date Handling
 
-Therefore:
+1. **Last Day of a Specific Month:**
+   - Whenever the user asks for data for the "last day of [Month] [Year]" (e.g., "last day of May 2025"):
+   - Calculate the exact last day of that month and query `ValuationDate` as an exact ISODate or range covering that day.
+   - Example (May 2025):
+     ```javascript
+     db.collection.find({{
+       "ValuationDate": {{
+         $gte: ISODate("2025-05-31T00:00:00.000Z"),
+         $lte: ISODate("2025-05-31T23:59:59.999Z")
+       }}
+     }})
+     ```
 
-"last business day of a month" = MAX(ValuationDate) available within that month.
-"last business day of an year" = MAX(ValuationDate) available within that year.
+2. **Last Day of a Specific Year:**
+   - Whenever the user asks for the "last day of year [Year]" (e.g., "last day of 2025"):
+   - Match `ValuationDate` on December 31st of that year.
+   - Example (2025):
+     ```javascript
+     db.collection.find({{
+       "ValuationDate": {{
+         $gte: ISODate("2025-12-31T00:00:00.000Z"),
+         $lte: ISODate("2025-12-31T23:59:59.999Z")
+       }}
+     }})
+     ```
+
+3. **Dynamic Last Available Day of Every Month (Aggregation Pipeline):**
+   - If the user asks for the last day data across all available months, use an Aggregation Pipeline to extract the maximum date (`$max`) for each month:
+   - Example:
+     ```javascript
+     db.collection.aggregate([
+       {{
+         $group: {{
+           _id: {{
+             year: {{ $year: "$ValuationDate" }},
+             month: {{ $month: "$ValuationDate" }}
+           }},
+           lastValuationDate: {{ $max: "$ValuationDate" }},
+           data: {{ $push: "$$ROOT" }}
+         }}
+       }}
+     ])
+     ```
+
+4. **Leap Year Handling:**
+   - Remember that February in leap years (e.g., 2024, 2028) ends on the 29th, and in non-leap years (e.g., 2025) ends on the 28th.
 
 ## Query planning rules
-For month / year Pnls, always get total monthly / yearly Pnls for the last business days
+For month / year Pnls, always get total monthly / yearly Pnls for the last business date available
+Apply left join on previous documents to get the records on last ValuationDate
 If Trader was not specified, filter by TraderName="Aggregate"
 
 Stage 1:
@@ -52,11 +97,10 @@ For monthly/yearly requests find out "last business day" by first grouping by mo
 Then sort by ValuationDate date and find the last ValuationDate.
 
 Stage 2:
-Apply left join on previous documents to get the records on last ValuationDate
+Apply left join on previous documents to get the records on last ValuationDate, strictly when monthly/yearly pnl is asked
 
 Stage 3:
 Filter by AssetClass, TradeName, ThemeName and/or AccountName if asked
-Apply TraderName/Type/dimension filters if asked.
 
 Stage 4:
 STRICTLY sum the requested PnL for each last ValuationDate.
@@ -64,65 +108,34 @@ STRICTLY sum the requested PnL for each last ValuationDate.
 Stage 5:
 If no other schema field has been used to group, keep only last ValuationDate and sum
 
-Stage 6:
-limit the results to 2000
+Example:
+for up down queries
+trade names that are up in months fund is down
 '''
 
 SCHEMA2='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
 Collection: {COLLECTION}
-   ValuationDate: 
-   Trader: Name of Trader
-   BSCharges: charges incurred in trade
+   ValuationDate: Date on which the charges/expenses have been calculated
+   Trader: Name of the Trader whose charges have been calculated
+   BSCharges: Balance Sheet Charges of the trader
    TradingExpense: expenses incurred in trade
+   Name: Name of the fund/account
+   BSUsage: Balance Sheet Usage for that trader
 '''
+
 SCHEMA3='''MONGODB DATABASE SCHEMA (Collection & Document Structure):
 Collection: {COLLECTION}
    Name: Name of Trader - the one who owns the investment strategy for a tradename
-   NonKLFTraderLimit: Capital limit per trader for a valuation date at the firm level
-   StartDate: start date of limit
-   EndDate: end date of limit
-Example:
-For a target month / year the aggragate query would be:
-[
-   {{
-   StartDate: {{
-      $lte: end_target_date                
-   }},
-   EndDate: {{
-      $gte: end_target_date
-   }}
-]
-where end_target_date = last date of month / year
+   CapitalLimit: Capital limit allocated to that respective trader for a Month
+   Month: month for which the limit has been allocated in format "yyyy-mm"
 '''
+
 SCHEMA4='''
 Collection: {COLLECTION}
    Name: Name of Account/Fund
-   ValuationDate: 
-   USDAUMMill: AUM in million USD about the Fund
+   ValuationDate: Date on which the USD AUM is calculated
+   USDAUM: AUM stands for Assets under management, AUM in USD of the respective Fund
 '''
-
-AGENT_SYSTEM_PROMPT = """You are a helpful data assistant that can generate mongo query or execute mongo query or draw a chart.
-When asked for data, strictly use the tools provided to fetch and present the results.
-0. Do not narrate your internal reasoning or tool execution.
-1. If Tool returns: Too many results obtained. Respond as: Too many results obtained, Do NOT run any query again. ask the end user: "Please refine your query! "
-2. If tool returns: No matching PnL records were found for the specified criteria. Repond as: No records found
-3. Provide a direct, human-readable summary of data of the retrieved context without repeating system metadata or model IDs.
-4. Convert the data into tabular data (Markdown tables)
-
-**Raw chart Output Passthrough**: 
-- When the `plot_graph` tool is executed, output its result **EXACTLY as returned** without modifying, analyzing, summarizing, explaining, or adding introductory/concluding text.
-- Do NOT attempt to interpret the visual trends, chart structure, or raw Mermaid code. Simply render the exact output string.
-
-YOU MUST ADHERE STRICTLY TO THE FOLLOWING CONSTRAINTS AT ALL TIMES:
-
-1. SOURCE MATERIAL ONLY: Answer the user's request ONLY using the information provided within the "CONTEXT" section. 
-2. NO EXTERNAL KNOWLEDGE: Do NOT use any internal or prior knowledge, facts, dates, or assumptions not explicitly written in the provided CONTEXT, even if you know the answer from your training data.
-3. NO EXTRAPOLATION OR INFERENCE: Do NOT extrapolate, assume, interpolate, or deduce facts beyond the literal text. If a detail is not explicitly stated, consider it unknown.
-4. ABSENCE OF INFORMATION: If the context does not contain enough information to fully answer the question, state: "The provided context does not contain enough information to answer this question." Do not attempt to complete the answer using external knowledge or reasonable guesses.
-5. NO HALLUCINATION: Do not make up facts, sources, or citations. Every claim in your response must map directly to a sentence in the context.
-In case of any of the above, respond strictly as "I cannot answer this based on the provided context.
-CONTEXT: {CONTEXT}
-"""
 
 QUERY_GUARDRAILS_CONTEXT = """You are a strict context-bound AI assistant. Your ONLY job is to answer the user's question using EXCLUSIVELY the provided Context Data below.
 
@@ -160,7 +173,6 @@ Follow these strict rules:
 1. Output ONLY a raw JSON array representing the PyMongo aggregation pipeline with no markdown formatting or code blocks.
 2. Task: Generate an consistently precise, OPTIMIZED MongoDB aggregation pipeline
 3. Projection Requirement: Return ONLY the required field. Exclude '_id' and all other metadata fields using a $project stage at the end.
-
 5. Represent all dates, months and years using Standard Extended JSON syntax: {{{{"$date": "YYYY-MM-DDTHH:mm:ssZ"}}}} instead of shell functions like ISODate("...").
 6. STRICTLY sum the requested PnL for each group.
 7. DO NOT use non-existent fields like "year". Filter date ranges on "ValuationDate" using ISODate object formatting: {{{{"$gte": {{{{"$date": "YYYY-01-01T00:00:00Z"}}}}, "$lte": {{{{"$date": "YYYY-12-31T23:59:59Z"}}}}. Similarly for month queries.

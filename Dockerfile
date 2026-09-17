@@ -31,7 +31,8 @@ COPY src_mcp /app/src_mcp
 COPY mcp /app/mcp
 RUN mkdir -p /app/logs
 
+EXPOSE 8050
 EXPOSE 9999
 
 # Run app directly from working directory /app/src
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "9999"]
+CMD ["uvicorn", "src_mcp.app:app", "--host", "0.0.0.0", "--port", "9999"]

@@ -1,16 +1,23 @@
 services:
-  api-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fastapi-pnl-engine
-    restart: always
+  api-server-1:
+    build: .
+    command: python -m mcp_server.mcp_web_app
+    ports:
+      - "8050:8050"
+    volumes:
+      - .:/app
+    environment:
+      - ENV=production
+
+  api-server-2:
+    build: .
+    command: uv run uvicorn src_mcp.app:app --host 0.0.0.0 --port 9999
     ports:
       - "9999:9999"
-    env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    volumes:
+      - .:/app
+    environment:
+      - ENV=production
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main

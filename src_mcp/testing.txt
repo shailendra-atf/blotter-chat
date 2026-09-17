@@ -1,3 +1,5 @@
 test if query from non existing table is generated
 
 include if not chroma db index
+
+4. First identify all unidentified, unrecognized, or proper names from the user's text and check if they exist as key or STRICTLY any complete word in the provided Python dictionary {UNIQUE_NAMES_DICT}

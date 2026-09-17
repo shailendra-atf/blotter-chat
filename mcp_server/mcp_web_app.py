@@ -20,7 +20,7 @@ for path in (str(PROJECT_ROOT), str(SRC_MCP_ROOT)):
     if path not in sys.path:
         sys.path.insert(0, path)
 
-from src_mcp.config import LIMIT_RESULTS, DB_NAME1, COLLECTION1, MAX_RESULTS
+from src_mcp.config import LIMIT_RESULTS, DB_NAME1, MAX_RESULTS
 from mcp_server.dependencies import logger
 from src_mcp.utils import validate_pipeline_stages, startup_db_client, initialize_llm_client
 
@@ -54,12 +54,12 @@ async def generate_mongodb_query(
         if db_type_upper == "MONGODB":
             if server_llm is None:
                 return {"response": "LLM client not initialized."}
-            # logger.info(f"{db_type_upper=}, {system_prompt=}, {user_intent=}, {target_resource=}")
+            logger.info(f"{db_type_upper=}, {system_prompt=}, {user_intent=}, {target_resource=}")
             prompt_template = ChatPromptTemplate.from_messages([
                 ("system", system_prompt),
                 ("human", """Intent: {user_intent}. schema: {schema_info}""")
             ])
-            # logger.info(f"{prompt_template=}")
+            logger.info(f"{db_type_upper=}, {system_prompt=}, {user_intent=}, {target_resource=}")
             chain = prompt_template | server_llm
             response = await asyncio.wait_for(
                 chain.ainvoke({
@@ -82,7 +82,7 @@ async def generate_mongodb_query(
 
 # Expose Tool 2: Read-Only Data Engine Execution
 @mcp.tool()
-async def execute_read_query(query_string: str, collection: str = COLLECTION1) -> Dict[str, Any]:
+async def execute_read_query(query_string: str, collection: str) -> Dict[str, Any]:
     """Runs a read-only SELECT database operation against SQLite storage."""
     db = await startup_db_client()
     if db is None:
@@ -104,7 +104,7 @@ async def execute_read_query(query_string: str, collection: str = COLLECTION1) -
             return {"query_results":f"Pipeline Validation Error: {validation_error}"}
         # logger.info(f"{pipeline=}")
 
-        target_collection = db[collection or COLLECTION1]
+        target_collection = db[collection]
         cursor = target_collection.aggregate(pipeline, maxTimeMS=120000)
         mongo_results = await cursor.to_list()
 
